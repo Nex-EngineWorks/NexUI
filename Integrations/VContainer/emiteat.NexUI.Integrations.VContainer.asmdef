@@ -1,0 +1,31 @@
+{
+    "name": "emiteat.NexUI.Integrations.VContainer",
+    "rootNamespace": "emiteat.NexUI.Integrations.VContainer",
+    "references": [
+        "emiteat.NexUI.Abstractions",
+        "emiteat.NexUI.Core",
+        "emiteat.NexUI.State",
+        "emiteat.NexUI.Motion",
+        "emiteat.NexUI.Theme",
+        "emiteat.NexUI.Settings",
+        "VContainer",
+        "UniTask"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [
+        "NEXUI_HAS_VCONTAINER"
+    ],
+    "versionDefines": [
+        {
+            "name": "jp.hadashikick.vcontainer",
+            "expression": "",
+            "define": "NEXUI_HAS_VCONTAINER"
+        }
+    ],
+    "noEngineReferences": false
+}

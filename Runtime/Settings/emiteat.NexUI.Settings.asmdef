@@ -1,0 +1,21 @@
+{
+    "name": "emiteat.NexUI.Settings",
+    "rootNamespace": "emiteat.NexUI.Settings",
+    "references": [
+        "emiteat.NexUI.Abstractions",
+        "emiteat.NexUI.Core",
+        "emiteat.NexUI.State",
+        "emiteat.NexUI.Motion",
+        "emiteat.NexUI.Theme",
+        "UniTask"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

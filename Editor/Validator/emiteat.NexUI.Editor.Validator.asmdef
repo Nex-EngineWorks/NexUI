@@ -1,0 +1,23 @@
+{
+    "name": "emiteat.NexUI.Editor.Validator",
+    "rootNamespace": "emiteat.NexUI.Editor.Validator",
+    "references": [
+        "emiteat.NexUI.Abstractions",
+        "emiteat.NexUI.Core",
+        "emiteat.NexUI.Motion",
+        "emiteat.NexUI.Theme",
+        "emiteat.NexUI.Settings",
+        "UniTask"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

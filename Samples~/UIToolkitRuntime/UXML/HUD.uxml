@@ -1,0 +1,7 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <ui:VisualElement name="root" class="nx-surface" style="flex-grow:1; padding:16px;">
+        <ui:Label name="nameLabel" text="Player" class="nx-title" />
+        <ui:ProgressBar name="hpBar" low-value="0" high-value="1" value="1" title="HP" />
+        <ui:Button name="closeButton" text="Close" class="nx-button" />
+    </ui:VisualElement>
+</ui:UXML>

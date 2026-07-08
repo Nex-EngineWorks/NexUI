@@ -1,0 +1,25 @@
+{
+    "name": "emiteat.NexUI.Samples.BasicRuntime",
+    "rootNamespace": "emiteat.NexUI.Samples.BasicRuntime",
+    "references": [
+        "emiteat.NexUI.Abstractions",
+        "emiteat.NexUI.Core",
+        "emiteat.NexUI.State",
+        "emiteat.NexUI.Motion",
+        "emiteat.NexUI.Theme",
+        "emiteat.NexUI.Components",
+        "emiteat.NexUI.Query",
+        "emiteat.NexUI.Integrations.UIToolkit",
+        "emiteat.NexUI.Integrations.UGUI",
+        "UniTask"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

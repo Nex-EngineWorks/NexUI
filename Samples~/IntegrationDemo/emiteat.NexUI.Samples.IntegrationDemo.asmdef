@@ -1,0 +1,19 @@
+{
+    "name": "emiteat.NexUI.Samples.IntegrationDemo",
+    "rootNamespace": "emiteat.NexUI.Samples.IntegrationDemo",
+    "references": [
+        "emiteat.NexUI.Abstractions",
+        "emiteat.NexUI.Core",
+        "emiteat.NexUI.Settings",
+        "UniTask"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

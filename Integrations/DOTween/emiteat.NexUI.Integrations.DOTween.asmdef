@@ -1,0 +1,26 @@
+{
+    "name": "emiteat.NexUI.Integrations.DOTween",
+    "rootNamespace": "emiteat.NexUI.Integrations.DOTween",
+    "references": [
+        "emiteat.NexUI.Abstractions",
+        "emiteat.NexUI.Motion",
+        "UniTask"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [
+        "NEXUI_HAS_DOTWEEN"
+    ],
+    "versionDefines": [
+        {
+            "name": "com.demigiant.dotween",
+            "expression": "",
+            "define": "NEXUI_HAS_DOTWEEN"
+        }
+    ],
+    "noEngineReferences": false
+}

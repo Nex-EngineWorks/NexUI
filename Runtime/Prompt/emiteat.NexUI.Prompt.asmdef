@@ -1,0 +1,17 @@
+{
+    "name": "emiteat.NexUI.Prompt",
+    "rootNamespace": "emiteat.NexUI.Prompt",
+    "references": [
+        "emiteat.NexUI.Abstractions",
+        "UniTask"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

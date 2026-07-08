@@ -1,0 +1,27 @@
+{
+    "name": "emiteat.NexUI.Integrations.InputSystem",
+    "rootNamespace": "emiteat.NexUI.Integrations.InputSystem",
+    "references": [
+        "emiteat.NexUI.Abstractions",
+        "emiteat.NexUI.Core",
+        "Unity.InputSystem",
+        "UniTask"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [
+        "NEXUI_HAS_INPUTSYSTEM"
+    ],
+    "versionDefines": [
+        {
+            "name": "com.unity.inputsystem",
+            "expression": "",
+            "define": "NEXUI_HAS_INPUTSYSTEM"
+        }
+    ],
+    "noEngineReferences": false
+}

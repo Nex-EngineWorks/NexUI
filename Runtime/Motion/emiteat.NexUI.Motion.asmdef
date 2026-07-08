@@ -1,0 +1,17 @@
+{
+    "name": "emiteat.NexUI.Motion",
+    "rootNamespace": "emiteat.NexUI.Motion",
+    "references": [
+        "emiteat.NexUI.Abstractions",
+        "UniTask"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

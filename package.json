@@ -1,0 +1,53 @@
+{
+  "name": "com.emiteat.nexui",
+  "displayName": "NexUI",
+  "version": "0.1.0",
+  "unity": "2022.3",
+  "description": "Backend-independent runtime UI framework for Unity. Provides Screen, Layer, State, Binding, Command, Motion, Theme, Query, Debug, Settings, Validation, and optional backend integrations.",
+  "keywords": [
+    "ui",
+    "unity",
+    "ui toolkit",
+    "ugui",
+    "runtime ui",
+    "framework",
+    "motion",
+    "state",
+    "binding"
+  ],
+  "author": {
+    "name": "emiteat"
+  },
+  "samples": [
+    {
+      "displayName": "Basic Runtime",
+      "description": "Basic NexUI runtime sample with screen, state, binding, and motion.",
+      "path": "Samples~/BasicRuntime"
+    },
+    {
+      "displayName": "UI Toolkit Runtime",
+      "description": "Runtime UI Toolkit sample with HUD, bindings, motion, and theme switching.",
+      "path": "Samples~/UIToolkitRuntime"
+    },
+    {
+      "displayName": "uGUI Runtime",
+      "description": "Runtime uGUI sample with HUD, pause menu, button actions, value binding, and theme tokens.",
+      "path": "Samples~/UGUIRuntime"
+    },
+    {
+      "displayName": "Integration Demo",
+      "description": "Reference sample for optional DOTween, VContainer, MessagePipe, Addressables, and Input System integrations.",
+      "path": "Samples~/IntegrationDemo"
+    },
+    {
+      "displayName": "Motion Demo",
+      "description": "Motion sample covering popup, toast, gesture feedback, layout motion, and shared element transition concepts.",
+      "path": "Samples~/MotionDemo"
+    },
+    {
+      "displayName": "Theme Demo",
+      "description": "Theme sample covering light/dark themes, runtime token overrides, responsive rules, and theme transitions.",
+      "path": "Samples~/ThemeDemo"
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+{
+    "name": "emiteat.NexUI.Integrations.MessagePipe",
+    "rootNamespace": "emiteat.NexUI.Integrations.MessagePipe",
+    "references": [
+        "emiteat.NexUI.Abstractions",
+        "emiteat.NexUI.Core",
+        "MessagePipe",
+        "UniTask"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [
+        "NEXUI_HAS_MESSAGEPIPE"
+    ],
+    "versionDefines": [
+        {
+            "name": "com.cysharp.messagepipe",
+            "expression": "",
+            "define": "NEXUI_HAS_MESSAGEPIPE"
+        }
+    ],
+    "noEngineReferences": false
+}

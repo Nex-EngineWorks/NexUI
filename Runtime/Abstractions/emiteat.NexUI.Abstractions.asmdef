@@ -1,0 +1,16 @@
+{
+    "name": "emiteat.NexUI.Abstractions",
+    "rootNamespace": "emiteat.NexUI.Abstractions",
+    "references": [
+        "UniTask"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

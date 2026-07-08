@@ -1,0 +1,17 @@
+{
+    "name": "emiteat.NexUI.Components",
+    "rootNamespace": "emiteat.NexUI.Components",
+    "references": [
+        "emiteat.NexUI.Abstractions",
+        "UniTask"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
