@@ -6,6 +6,7 @@
         "emiteat.NexUI.Core",
         "emiteat.NexUI.State",
         "emiteat.NexUI.Motion",
+        "emiteat.NexUI.MotionClip",
         "emiteat.NexUI.Theme",
         "emiteat.NexUI.Components",
         "emiteat.NexUI.Query",

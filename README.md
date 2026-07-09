@@ -16,6 +16,7 @@ Abstractions   (interfaces + capabilities + compiled motion timeline — no back
     ├── Core        (UIManager, screens, layers, stacks, command pipeline, validation)
     ├── State       (state store, signals, capability-based binders)
     ├── Motion      (authoring assets, compiler, built-in player)
+    ├── MotionClip  (multi-element keyframe timeline clips + player, parallel to Motion)
     ├── Theme       (tokens, registry, appliers)
     └── Components   (backend-agnostic component contracts)
 
@@ -91,4 +92,5 @@ Commands can be logged, replayed, and inverted by `IUndoableCommand`. See
 - uGUI Runtime
 - Integration Demo
 - Motion Demo
+- Motion Clip Demo
 - Theme Demo

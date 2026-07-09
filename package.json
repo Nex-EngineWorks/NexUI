@@ -12,6 +12,8 @@
     "runtime ui",
     "framework",
     "motion",
+    "keyframe",
+    "timeline",
     "state",
     "binding"
   ],
@@ -48,6 +50,11 @@
       "displayName": "Theme Demo",
       "description": "Theme sample covering light/dark themes, runtime token overrides, responsive rules, and theme transitions.",
       "path": "Samples~/ThemeDemo"
+    },
+    {
+      "displayName": "Motion Clip Demo",
+      "description": "Minimal Motion Clip Editor sample: scale+alpha panel-open animation played via UIManager.PlayMotionClipAsync.",
+      "path": "Samples~/MotionClipDemo"
     }
   ]
 }

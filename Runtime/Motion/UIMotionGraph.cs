@@ -17,6 +17,13 @@ namespace emiteat.NexUI.Motion
             public UIMotionStep step;
             /// <summary>Ids of nodes that must complete before this node starts.</summary>
             public string[] dependencies = Array.Empty<string>();
+
+            /// <summary>
+            /// Editor-only layout hint: where this node sits on the Motion Graph canvas.
+            /// Additive, backward-compatible serialized field (defaults to zero for assets
+            /// authored before it existed). Ignored by the runtime compiler.
+            /// </summary>
+            public UnityEngine.Vector2 editorPosition;
         }
 
         public Node[] nodes = Array.Empty<Node>();

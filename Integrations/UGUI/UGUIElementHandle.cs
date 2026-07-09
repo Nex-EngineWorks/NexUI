@@ -45,6 +45,7 @@ namespace emiteat.NexUI.Integrations.UGUI
 
             Add<IUIVisibilityCapability>(new GoVisibility(_go));
             Add<IUITransformCapability>(new UguiTransform(_go, rect, canvasGroup));
+            if (rect != null) Add<IUISizeCapability>(new UguiSize(rect));
 
             var button = _go.GetComponent<Button>();
             if (button != null)
@@ -123,6 +124,13 @@ namespace emiteat.NexUI.Integrations.UGUI
                     _transform.localEulerAngles = e;
                 }
             }
+        }
+
+        private sealed class UguiSize : IUISizeCapability
+        {
+            private readonly RectTransform _rect;
+            public UguiSize(RectTransform rect) => _rect = rect;
+            public Vector2 SizeDelta { get => _rect.sizeDelta; set => _rect.sizeDelta = value; }
         }
 
         private sealed class UguiClick : IUIClickCapability

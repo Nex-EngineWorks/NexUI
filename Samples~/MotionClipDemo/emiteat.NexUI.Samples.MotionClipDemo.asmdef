@@ -1,0 +1,19 @@
+{
+    "name": "emiteat.NexUI.Samples.MotionClipDemo",
+    "rootNamespace": "emiteat.NexUI.Samples.MotionClipDemo",
+    "references": [
+        "emiteat.NexUI.Abstractions",
+        "emiteat.NexUI.Core",
+        "emiteat.NexUI.MotionClip",
+        "UniTask"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

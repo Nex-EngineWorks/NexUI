@@ -42,6 +42,7 @@ namespace emiteat.NexUI.Integrations.UIToolkit
             Add<IUIVisibilityCapability>(new VeVisibility(_element));
             Add<IUIStyleCapability>(new VeStyle(_element));
             Add<IUITransformCapability>(new VeTransform(_element));
+            Add<IUISizeCapability>(new VeSize(_element));
             Add<IUIPointerCapability>(new VePointer(_element));
             Add<IUIFocusCapability>(new VeFocus(_element));
 
@@ -138,6 +139,17 @@ namespace emiteat.NexUI.Integrations.UIToolkit
             {
                 get => _rotation;
                 set { _rotation = value; _ve.style.rotate = new Rotate(new Angle(value, AngleUnit.Degree)); }
+            }
+        }
+
+        private sealed class VeSize : IUISizeCapability
+        {
+            private readonly VisualElement _ve;
+            public VeSize(VisualElement ve) => _ve = ve;
+            public Vector2 SizeDelta
+            {
+                get => new Vector2(_ve.resolvedStyle.width, _ve.resolvedStyle.height);
+                set { _ve.style.width = value.x; _ve.style.height = value.y; }
             }
         }
 

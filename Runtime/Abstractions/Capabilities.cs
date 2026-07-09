@@ -53,4 +53,10 @@ namespace emiteat.NexUI.Abstractions
         Vector3 Scale { get; set; }
         float Rotation { get; set; }
     }
+
+    /// <summary>Element size capability (RectTransform.sizeDelta / UI Toolkit width+height).</summary>
+    public interface IUISizeCapability
+    {
+        Vector2 SizeDelta { get; set; }
+    }
 }
