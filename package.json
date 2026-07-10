@@ -2,7 +2,7 @@
   "name": "com.emiteat.nexui",
   "displayName": "NexUI",
   "version": "0.1.0",
-  "unity": "2022.3",
+  "unity": "6000.4",
   "description": "Backend-independent runtime UI framework for Unity. Provides Screen, Layer, State, Binding, Command, Motion, Theme, Query, Debug, Settings, Validation, and optional backend integrations.",
   "keywords": [
     "ui",

@@ -2,7 +2,7 @@
 
 ## 요구사항
 
-- Unity **2022.3+** (Unity 6000.4에서 개발).
+- Unity **6000.4+**.
 - **UniTask** (`com.cysharp.unitask`) — 필수. 모든 비동기 API가 사용합니다.
 - uGUI 통합용: `com.unity.ugui` + TextMeshPro (Unity 기본 포함).
 

@@ -26,8 +26,24 @@ namespace emiteat.NexUI.Integrations.UGUI
         {
             ScreenId = screenId;
             _root = root;
+            EnsureOwnCanvas(root);
             RootHandle = new UGUIElementHandle(root, screenId);
             IndexTags();
+        }
+
+        /// <summary>
+        /// B4 (performance): gives the screen its own nested <see cref="Canvas"/> by default so
+        /// this screen's rebuilds/animations don't force a full-hierarchy rebatch of sibling
+        /// screens sharing a parent overlay Canvas. A nested Canvas inherits render mode,
+        /// EventSystem and GraphicRaycaster from its parent - it does not need its own, and
+        /// adding one here would double-raycast input. Only adds one when the prefab/screen
+        /// asset doesn't already define its own (screen authors who need custom sort order /
+        /// render-mode control keep full control by adding a Canvas themselves).
+        /// </summary>
+        private static void EnsureOwnCanvas(GameObject root)
+        {
+            if (root == null || root.GetComponent<Canvas>() != null) return;
+            root.AddComponent<Canvas>();
         }
 
         private void IndexTags()

@@ -53,6 +53,13 @@ namespace emiteat.NexUI.Core
     {
         public string screenId;
         public int priority;
+
+        /// <summary>
+        /// Screen-reader-facing label announced when this screen opens (e.g. "Settings").
+        /// Plain string (not the <c>AccessibilityRole</c> enum) so Core doesn't need a new
+        /// dependency on the Accessibility assembly for a single field.
+        /// </summary>
+        public string accessibilityLabel;
     }
 
     /// <summary>

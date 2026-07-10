@@ -49,6 +49,15 @@ namespace emiteat.NexUI.Core
         /// <summary>Raised after a screen finishes closing.</summary>
         public event System.Action<UIScreenInstance> ScreenClosed;
 
+        /// <summary>
+        /// B7 (per-screen fault isolation): raised when a screen's open or close lifecycle
+        /// throws. The manager has already rolled the screen back to a closed/removed state by
+        /// the time this fires, so the rest of the UI stack keeps working - subscribe to show a
+        /// fallback (e.g. an error toast) instead of letting the exception surface only as a
+        /// console error.
+        /// </summary>
+        public event System.Action<string, System.Exception> ScreenFaulted;
+
         // ---- Debug read-only surface ---------------------------------------
 
         public IReadOnlyCollection<UIScreenInstance> OpenScreens => _open.Values;
@@ -125,39 +134,61 @@ namespace emiteat.NexUI.Core
             var instance = new UIScreenInstance(def, surface) { State = UIScreenState.Opening };
             _open[screenId] = instance;
 
-            surface.SetActive(true);
-            surface.SetSortingOrder(_layers.ResolveBaseSortingOrder(backend, def.layer.layerType) + def.identity.priority);
-            surface.SetInputBlocking(def.policy.blockInputBehind || def.layer.layerType == UILayerType.Modal);
-
-            var ctx = new UIScreenContext(screenId, surface, _lifetimeCts.Token);
-
-            if (instance.Lifecycle != null)
-                await instance.Lifecycle.OnBeforeOpenAsync(ctx);
-
-            _policy.Apply(instance);
-
-            for (int i = 0; i < _inputPolicies.Count; i++)
-                _inputPolicies[i].Apply(def);
-
-            if (def.layer.layerType == UILayerType.Modal)
-                _modalStack.Push(screenId);
-
-            if (def.focus.trapFocus || def.policy.focusPolicy == UIFocusPolicy.TrapFocus)
+            // B7 (per-screen fault isolation): a throw anywhere below (a bad lifecycle hook, a
+            // broken motion asset, a misbehaving input policy) previously propagated out of
+            // OpenAsync with `instance` already left in `_open` mid-"Opening" - IsOpen(screenId)
+            // would then report true forever for a screen that never finished opening, and the
+            // exception could take down whatever awaited this call. Roll back to closed instead.
+            try
             {
-                _focus.Trap(surface, def.focus.defaultFocusElementId);
-                LastFocusedElementId = def.focus.defaultFocusElementId;
+                surface.SetActive(true);
+                surface.SetSortingOrder(_layers.ResolveBaseSortingOrder(backend, def.layer.layerType) + def.identity.priority);
+                surface.SetInputBlocking(def.policy.blockInputBehind || def.layer.layerType == UILayerType.Modal);
+
+                var ctx = new UIScreenContext(screenId, surface, _lifetimeCts.Token);
+
+                if (instance.Lifecycle != null)
+                    await instance.Lifecycle.OnBeforeOpenAsync(ctx);
+
+                _policy.Apply(instance);
+
+                for (int i = 0; i < _inputPolicies.Count; i++)
+                    _inputPolicies[i].Apply(def);
+
+                if (def.layer.layerType == UILayerType.Modal)
+                    _modalStack.Push(screenId);
+
+                if (def.focus.trapFocus || def.policy.focusPolicy == UIFocusPolicy.TrapFocus)
+                {
+                    _focus.Trap(surface, def.focus.defaultFocusElementId);
+                    LastFocusedElementId = def.focus.defaultFocusElementId;
+                }
+
+                if (openPolicy == UIOpenPolicy.StackPush)
+                    _backStack.Push(screenId);
+
+                if (!args.suppressMotion)
+                    await PlayMotionAsync(surface, def.motion.openMotion);
+
+                instance.State = UIScreenState.Open;
+
+                if (instance.Lifecycle != null)
+                    await instance.Lifecycle.OnAfterOpenAsync(ctx);
             }
-
-            if (openPolicy == UIOpenPolicy.StackPush)
-                _backStack.Push(screenId);
-
-            if (!args.suppressMotion)
-                await PlayMotionAsync(surface, def.motion.openMotion);
-
-            instance.State = UIScreenState.Open;
-
-            if (instance.Lifecycle != null)
-                await instance.Lifecycle.OnAfterOpenAsync(ctx);
+            catch (System.Exception ex)
+            {
+                Debug.LogError($"[NexUI] OpenAsync('{screenId}') threw during open - rolling back so the rest of the UI stack keeps working: {ex}");
+                _open.Remove(screenId);
+                _modalStack.Remove(screenId);
+                _backStack.Remove(screenId);
+                if (def.focus.trapFocus || def.policy.focusPolicy == UIFocusPolicy.TrapFocus)
+                    _focus.Release(surface, false);
+                surface.SetActive(false);
+                surface.Destroy();
+                instance.State = UIScreenState.Closed;
+                ScreenFaulted?.Invoke(screenId, ex);
+                return;
+            }
 
             ScreenOpened?.Invoke(instance);
         }
@@ -174,19 +205,31 @@ namespace emiteat.NexUI.Core
             var surface = instance.Surface;
             var ctx = new UIScreenContext(screenId, surface, _lifetimeCts.Token);
 
-            if (instance.Lifecycle != null)
-                await instance.Lifecycle.OnBeforeCloseAsync(ctx);
+            // B7 (per-screen fault isolation): if a close hook throws, still force the screen out
+            // of `_open` and destroy its surface in the catch below - otherwise a broken close
+            // hook permanently wedges this screenId (IsOpen keeps returning true, a later
+            // OpenAsync for the same id would collide with the never-removed entry).
+            try
+            {
+                if (instance.Lifecycle != null)
+                    await instance.Lifecycle.OnBeforeCloseAsync(ctx);
 
-            if (!args.suppressMotion && !args.immediate)
-                await PlayMotionAsync(surface, def.motion.closeMotion);
+                if (!args.suppressMotion && !args.immediate)
+                    await PlayMotionAsync(surface, def.motion.closeMotion);
 
-            if (def.focus.trapFocus || def.policy.focusPolicy == UIFocusPolicy.TrapFocus)
-                _focus.Release(surface, def.focus.restoreFocusOnClose);
+                if (def.focus.trapFocus || def.policy.focusPolicy == UIFocusPolicy.TrapFocus)
+                    _focus.Release(surface, def.focus.restoreFocusOnClose);
 
-            _policy.Revert(instance);
+                _policy.Revert(instance);
 
-            for (int i = 0; i < _inputPolicies.Count; i++)
-                _inputPolicies[i].Release(def);
+                for (int i = 0; i < _inputPolicies.Count; i++)
+                    _inputPolicies[i].Release(def);
+            }
+            catch (System.Exception ex)
+            {
+                Debug.LogError($"[NexUI] CloseAsync('{screenId}') threw during close - forcing the screen closed anyway: {ex}");
+                ScreenFaulted?.Invoke(screenId, ex);
+            }
 
             _modalStack.Remove(screenId);
             _backStack.Remove(screenId);
@@ -198,7 +241,14 @@ namespace emiteat.NexUI.Core
             instance.State = UIScreenState.Closed;
 
             if (instance.Lifecycle != null)
-                await instance.Lifecycle.OnAfterCloseAsync(ctx);
+            {
+                try { await instance.Lifecycle.OnAfterCloseAsync(ctx); }
+                catch (System.Exception ex)
+                {
+                    Debug.LogError($"[NexUI] OnAfterCloseAsync('{screenId}') threw: {ex}");
+                    ScreenFaulted?.Invoke(screenId, ex);
+                }
+            }
 
             ScreenClosed?.Invoke(instance);
 

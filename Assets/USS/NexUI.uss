@@ -42,3 +42,12 @@
 .nx-danger {
     background-color: rgb(220, 38, 38);
 }
+
+/* Default keyboard focus-ring (B3: basic keyboard-navigation support by default).
+   Screen authors can override with their own Theme token-driven style; this is only the
+   fallback so a focused element is never invisible out of the box. */
+:focus {
+    outline-color: rgb(96, 165, 250);
+    outline-width: 2px;
+    outline-offset: 1px;
+}

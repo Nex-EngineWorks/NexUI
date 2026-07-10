@@ -46,6 +46,29 @@ namespace emiteat.NexUI.Editor.ProjectSetup
                 new ThemeToken("color.danger", "#DC2626"),
                 new ThemeToken("color.text", "#F5F5F5"),
                 new ThemeToken("radius.md", "8"),
+
+                // C2: 8pt spacing scale (4pt half-step for icons/small text), so Auto
+                // Layout/Constraints padding/spacing and general layout values have a
+                // shared preset to snap to instead of arbitrary pixel values per-element.
+                new ThemeToken("space.half", "4"),
+                new ThemeToken("space.1", "8"),
+                new ThemeToken("space.2", "16"),
+                new ThemeToken("space.3", "24"),
+                new ThemeToken("space.4", "32"),
+                new ThemeToken("space.5", "40"),
+                new ThemeToken("space.6", "48"),
+
+                // C2: type scale on the same 4pt step, with a 1.4x line-height convention.
+                new ThemeToken("type.size.sm", "12"),
+                new ThemeToken("type.lineHeight.sm", "17"),
+                new ThemeToken("type.size.md", "16"),
+                new ThemeToken("type.lineHeight.md", "22"),
+                new ThemeToken("type.size.lg", "20"),
+                new ThemeToken("type.lineHeight.lg", "28"),
+                new ThemeToken("type.size.xl", "24"),
+                new ThemeToken("type.lineHeight.xl", "34"),
+                new ThemeToken("type.size.xxl", "32"),
+                new ThemeToken("type.lineHeight.xxl", "45"),
             };
             EditorUtility.SetDirty(theme);
             return theme;

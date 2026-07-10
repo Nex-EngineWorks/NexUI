@@ -54,19 +54,42 @@ namespace emiteat.NexUI.Core
                 return;
             }
 
-            // Build the middleware pipeline from the inside out.
-            Func<UniTask> next = () => handler(command, context);
-            for (int i = _middlewares.Count - 1; i >= 0; i--)
-            {
-                var mw = _middlewares[i];
-                var inner = next;
-                next = () => mw.InvokeAsync(command, context, inner);
-            }
-
-            await next();
+            // One state object per dispatch instead of one closure per middleware (B4: audited
+            // for per-call allocations - a dispatch with N middlewares previously allocated N
+            // closure environments here; this allocates exactly one).
+            var state = new DispatchState(command, context, handler, _middlewares);
+            await state.InvokeNext();
 
             Log?.Add(command);
             CommandExecuted?.Invoke(command);
+        }
+
+        /// <summary>Walks the middleware chain by index instead of pre-building N nested closures per dispatch.</summary>
+        private sealed class DispatchState
+        {
+            private readonly IUICommand _command;
+            private readonly UICommandContext _context;
+            private readonly Func<IUICommand, UICommandContext, UniTask> _handler;
+            private readonly List<IUIMiddleware> _middlewares;
+            private int _index;
+
+            public DispatchState(IUICommand command, UICommandContext context,
+                Func<IUICommand, UICommandContext, UniTask> handler, List<IUIMiddleware> middlewares)
+            {
+                _command = command;
+                _context = context;
+                _handler = handler;
+                _middlewares = middlewares;
+            }
+
+            public UniTask InvokeNext()
+            {
+                if (_index >= _middlewares.Count)
+                    return _handler(_command, _context);
+
+                var mw = _middlewares[_index++];
+                return mw.InvokeAsync(_command, _context, InvokeNext);
+            }
         }
     }
 }

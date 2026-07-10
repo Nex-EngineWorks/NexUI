@@ -37,9 +37,7 @@ Integrations.UGUI      → all runtime modules
 
 ## Dependencies
 
-- Unity **2022.3+** (developed against Unity 6). Uses `UnityEngine.Awaitable`-free async:
-  all async APIs are `System.Threading.Tasks.Task`, so there is **no external async
-  dependency** (no UniTask required).
+- Unity **6000.4+**. Async APIs use **UniTask** (`com.cysharp.unitask`) throughout.
 - uGUI integration references `com.unity.ugui` and `Unity.TextMeshPro`.
 
 ## Quick start
