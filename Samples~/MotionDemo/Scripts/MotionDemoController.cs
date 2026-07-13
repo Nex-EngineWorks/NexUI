@@ -15,23 +15,23 @@ namespace emiteat.NexUI.Samples.MotionDemo
             if (_popup != null)
             {
                 _popup.motion.openMotion = BuildPopupMotion();
-                NexUI.RegisterScreen(_popup);
+                NexUIApp.RegisterScreen(_popup);
             }
 
             if (_toast != null)
             {
                 _toast.motion.openMotion = BuildToastMotion();
-                NexUI.RegisterScreen(_toast);
+                NexUIApp.RegisterScreen(_toast);
             }
         }
 
         private void Update()
         {
             if (Input.GetKeyDown(KeyCode.P) && _popup != null)
-                NexUI.Toggle(_popup.ScreenId);
+                NexUIApp.Toggle(_popup.ScreenId);
 
             if (Input.GetKeyDown(KeyCode.Y) && _toast != null)
-                NexUI.Open(_toast.ScreenId);
+                NexUIApp.Open(_toast.ScreenId);
         }
 
         private static UIMotionPreset BuildPopupMotion()

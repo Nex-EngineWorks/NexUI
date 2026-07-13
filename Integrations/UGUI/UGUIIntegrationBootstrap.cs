@@ -45,7 +45,7 @@ namespace emiteat.NexUI.Integrations.UGUI
         private void Awake()
         {
             if (_canvas == null) _canvas = GetComponent<Canvas>();
-            Manager = Core.NexUI.Manager;
+            Manager = Core.NexUIApp.Manager;
             Register(Manager);
         }
 

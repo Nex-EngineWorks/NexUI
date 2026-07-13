@@ -97,6 +97,27 @@ namespace emiteat.NexUI.Tests.EditMode
         }
 
         [Test]
+        public void Clip_Defaults_WorkAreaOffAndMarkersEmpty()
+        {
+            var clip = ScriptableObject.CreateInstance<UIMotionClip>();
+            Assert.IsFalse(clip.useWorkArea);
+            Assert.AreEqual(0f, clip.workAreaStart);
+            Assert.AreEqual(1f, clip.workAreaEnd);
+            Assert.AreEqual(0, clip.markers.Length);
+        }
+
+        [Test]
+        public void Clip_Markers_RoundTrip()
+        {
+            var clip = ScriptableObject.CreateInstance<UIMotionClip>();
+            clip.markers = new[] { new UIMotionClipMarker("Impact", 0.4f), new UIMotionClipMarker("Loop Point", 0.8f) };
+
+            Assert.AreEqual(2, clip.markers.Length);
+            Assert.AreEqual("Impact", clip.markers[0].name);
+            Assert.AreEqual(0.4f, clip.markers[0].time, 0.0001f);
+        }
+
+        [Test]
         public void Clip_CreateAddTrackAddKeyframe_RoundTrips()
         {
             var clip = ScriptableObject.CreateInstance<UIMotionClip>();

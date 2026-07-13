@@ -18,7 +18,6 @@ namespace emiteat.NexUI.Editor.Validator
         private UIValidationReport _report;
         private Vector2 _scroll;
 
-        [MenuItem("Tools/NexUI/Validator")]
         public static void Open() => GetWindow<NexUIValidatorWindow>("NexUI Validator");
 
         private void OnGUI()

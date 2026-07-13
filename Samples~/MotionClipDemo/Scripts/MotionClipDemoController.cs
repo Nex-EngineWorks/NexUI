@@ -19,7 +19,7 @@ namespace emiteat.NexUI.Samples.MotionClipDemo
         private void Awake()
         {
             if (_panel == null) return;
-            NexUI.RegisterScreen(_panel);
+            NexUIApp.RegisterScreen(_panel);
             _openClip = BuildOpenClip();
         }
 
@@ -39,8 +39,8 @@ namespace emiteat.NexUI.Samples.MotionClipDemo
 
         private async UniTask OpenAndAnimateAsync()
         {
-            await NexUI.OpenAsync(_panel.ScreenId, new UIOpenArgs { suppressMotion = true });
-            await NexUI.Manager.PlayMotionClipAsync(_panel.ScreenId, _openClip);
+            await NexUIApp.OpenAsync(_panel.ScreenId, new UIOpenArgs { suppressMotion = true });
+            await NexUIApp.Manager.PlayMotionClipAsync(_panel.ScreenId, _openClip);
         }
 
         private static UIMotionClip BuildOpenClip()

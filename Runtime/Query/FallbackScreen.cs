@@ -7,7 +7,7 @@ namespace emiteat.NexUI.Query
     /// Declarative fallback routing for a query's error state. The Query module cannot
     /// reference Core, so instead of opening a screen directly it raises
     /// <see cref="FallbackRequested"/> with a screen id; the host wires this to
-    /// <c>NexUI.Open(screenId)</c>.
+    /// <c>NexUIApp.Open(screenId)</c>.
     /// </summary>
     public sealed class FallbackScreen<T> : IDisposable
     {

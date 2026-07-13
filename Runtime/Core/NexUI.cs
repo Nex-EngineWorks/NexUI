@@ -7,7 +7,7 @@ namespace emiteat.NexUI.Core
     /// Static convenience facade over a single shared <see cref="UIManager"/>.
     /// Games that want dependency injection can ignore this and use UIManager directly.
     /// </summary>
-    public static class NexUI
+    public static class NexUIApp
     {
         private static UIManager _manager;
 

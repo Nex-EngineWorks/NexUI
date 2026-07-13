@@ -13,20 +13,20 @@ namespace emiteat.NexUI.Samples.BasicRuntime
         private void Update()
         {
             if (Input.GetKeyDown(KeyCode.I))
-                Core.NexUI.Toggle("Inventory");
+                Core.NexUIApp.Toggle("Inventory");
 
             if (Input.GetKeyDown(KeyCode.Escape))
-                Core.NexUI.Open("PauseMenu");
+                Core.NexUIApp.Open("PauseMenu");
 
             if (Input.GetKeyDown(KeyCode.Backspace))
-                Core.NexUI.Back();
+                Core.NexUIApp.Back();
         }
 #else
         private void Awake()
         {
             Debug.LogWarning(
                 "[NexUI Sample] Legacy Input is disabled. Enable it in Player Settings > " +
-                "Active Input Handling (Both/Old), or drive NexUI.Open/Toggle/Back from your own input code.");
+                "Active Input Handling (Both/Old), or drive NexUIApp.Open/Toggle/Back from your own input code.");
         }
 #endif
     }

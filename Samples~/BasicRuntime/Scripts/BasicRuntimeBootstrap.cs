@@ -43,12 +43,12 @@ namespace emiteat.NexUI.Samples.BasicRuntime
             Inventory = BuildDefinition("Inventory", _inventoryAsset, UILayerType.Window, UIOpenPolicy.Single, popup, fade);
             PauseMenu = BuildDefinition("PauseMenu", _pauseMenuAsset, UILayerType.Modal, UIOpenPolicy.StackPush, popup, fade);
 
-            Core.NexUI.RegisterScreen(Hud);
-            Core.NexUI.RegisterScreen(Inventory);
-            Core.NexUI.RegisterScreen(PauseMenu);
+            Core.NexUIApp.RegisterScreen(Hud);
+            Core.NexUIApp.RegisterScreen(Inventory);
+            Core.NexUIApp.RegisterScreen(PauseMenu);
 
             if (_hudAsset != null)
-                await Core.NexUI.OpenAsync("HUD");
+                await Core.NexUIApp.OpenAsync("HUD");
             else
                 Debug.LogWarning("[NexUI Sample] Assign a HUD asset to see it open.");
         }

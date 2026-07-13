@@ -40,7 +40,6 @@ namespace emiteat.NexUI.Editor.Settings
             };
         }
 
-        [MenuItem("Tools/NexUI/Settings")]
         public static void OpenSettings() => SettingsService.OpenProjectSettings("Project/NexUI");
 
         private static NexUISettings FindOrNull()

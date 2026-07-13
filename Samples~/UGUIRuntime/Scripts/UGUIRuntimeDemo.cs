@@ -17,8 +17,8 @@ namespace emiteat.NexUI.Samples.UGUIRuntime
 
         private async void Start()
         {
-            if (_hud != null) NexUI.RegisterScreen(_hud);
-            if (_pauseMenu != null) NexUI.RegisterScreen(_pauseMenu);
+            if (_hud != null) NexUIApp.RegisterScreen(_hud);
+            if (_pauseMenu != null) NexUIApp.RegisterScreen(_pauseMenu);
 
             if (_dark != null) NexUITheme.Registry.Register(_dark);
             if (_light != null) NexUITheme.Registry.Register(_light);
@@ -28,13 +28,13 @@ namespace emiteat.NexUI.Samples.UGUIRuntime
             _store.Set("player.name", "NexUI Pilot");
 
             if (_hud != null)
-                await NexUI.OpenAsync(_hud.ScreenId);
+                await NexUIApp.OpenAsync(_hud.ScreenId);
         }
 
         private void Update()
         {
             if (Input.GetKeyDown(KeyCode.Escape) && _pauseMenu != null)
-                NexUI.Toggle(_pauseMenu.ScreenId);
+                NexUIApp.Toggle(_pauseMenu.ScreenId);
 
             if (Input.GetKeyDown(KeyCode.T))
                 NexUITheme.Use(NexUITheme.Active != null && NexUITheme.Active.themeId == "dark" ? "light" : "dark");

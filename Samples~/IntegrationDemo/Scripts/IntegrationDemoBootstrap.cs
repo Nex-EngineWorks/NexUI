@@ -14,7 +14,7 @@ namespace emiteat.NexUI.Samples.IntegrationDemo
             if (_settings != null)
             {
                 foreach (var screen in _settings.screens)
-                    if (screen != null) NexUI.RegisterScreen(screen);
+                    if (screen != null) NexUIApp.RegisterScreen(screen);
             }
 
             Debug.Log($"[NexUI IntegrationDemo] DOTween integration: {Available("emiteat.NexUI.Integrations.DOTween.DOTweenMotionPlayer, emiteat.NexUI.Integrations.DOTween")}");

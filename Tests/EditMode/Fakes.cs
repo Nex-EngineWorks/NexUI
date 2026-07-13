@@ -4,6 +4,7 @@ using System.Threading;
 using Cysharp.Threading.Tasks;
 using emiteat.NexUI.Abstractions;
 using emiteat.NexUI.Core;
+using emiteat.NexUI.MotionClip;
 using UnityEngine;
 
 namespace emiteat.NexUI.Tests.Fakes
@@ -109,6 +110,56 @@ namespace emiteat.NexUI.Tests.Fakes
         public FakeFocusAdapter(UIRenderBackend backend = UIRenderBackend.UGUI) => Backend = backend;
         public void Trap(IUISurface surface, string defaultElementId) => TrapCount++;
         public void Release(IUISurface surface, bool restorePrevious) => ReleaseCount++;
+    }
+
+    /// <summary>
+    /// Deterministic <see cref="IUIMotionClipPlayer"/> double for state-machine tests: PlayAsync
+    /// returns a UniTask under manual control (via <see cref="CompletePending"/>), so tests can
+    /// simulate "a transition is still playing" without depending on Unity's real player loop
+    /// ticking (which EditMode tests can't reliably drive).
+    /// </summary>
+    public sealed class FakeMotionClipPlayer : IUIMotionClipPlayer
+    {
+        public int PlayCount;
+        public int StopCount;
+        public int EvaluateCount;
+        public float LastEvaluatedTime;
+
+        private UniTaskCompletionSource _pending;
+
+        public UniTask PlayAsync(IUISurface surface, UIMotionClip clip, CancellationToken cancellationToken = default)
+        {
+            PlayCount++;
+            _pending = new UniTaskCompletionSource();
+            return _pending.Task;
+        }
+
+        public void CompletePending() => _pending?.TrySetResult();
+
+        public void Stop() => StopCount++;
+
+        public void Evaluate(IUISurface surface, UIMotionClip clip, float time)
+        {
+            EvaluateCount++;
+            LastEvaluatedTime = time;
+        }
+    }
+
+    /// <summary>Records every dispatched command; can be made to throw to simulate a failed dispatch, for Motion Graph's <c>Command.Dispatch</c> node tests.</summary>
+    public sealed class FakeCommandDispatcher : IUICommandDispatcher
+    {
+        public readonly List<IUICommand> Dispatched = new List<IUICommand>();
+        public bool ThrowOnDispatch;
+
+        public UniTask DispatchAsync(IUICommand command)
+        {
+            if (ThrowOnDispatch) throw new InvalidOperationException("FakeCommandDispatcher: simulated failure");
+            Dispatched.Add(command);
+            return UniTask.CompletedTask;
+        }
+
+        public void UseMiddleware(IUIMiddleware middleware) { }
+        public void RegisterHandler<TCommand>(IUICommandHandler<TCommand> handler) where TCommand : IUICommand { }
     }
 
     public sealed class FakeThemeApplier : IUIThemeApplier

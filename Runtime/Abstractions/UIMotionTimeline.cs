@@ -17,11 +17,59 @@ namespace emiteat.NexUI.Abstractions
         Rotation = 5
     }
 
-    /// <summary>Easing functions supported by the built-in fallback player.</summary>
+    /// <summary>
+    /// Easing functions. <see cref="Linear"/>/<see cref="EaseInOut"/> are the original two, evaluated
+    /// by every consumer (<c>BuiltInMotionPlayer</c>, <c>UIMotionClipEvaluator</c>). Everything below
+    /// them is the standard Penner easing set added for the Motion Clip Editor's Easing Browser
+    /// (<c>emiteat.NexUI.MotionClip.UIMotionClipEvaluator.Ease</c> is the only place that evaluates
+    /// these; older consumers fall back to linear via their existing <c>default:</c> case, so this is
+    /// a purely additive, migration-safe change - existing serialized clips/presets are unaffected).
+    /// Numeric values are fixed and must never be renumbered (they're what gets serialized).
+    /// </summary>
     public enum UIMotionEasing
     {
         Linear = 0,
-        EaseInOut = 1
+        EaseInOut = 1,
+
+        EaseInQuad = 2,
+        EaseOutQuad = 3,
+        EaseInOutQuad = 4,
+
+        EaseInCubic = 5,
+        EaseOutCubic = 6,
+        EaseInOutCubic = 7,
+
+        EaseInQuart = 8,
+        EaseOutQuart = 9,
+        EaseInOutQuart = 10,
+
+        EaseInQuint = 11,
+        EaseOutQuint = 12,
+        EaseInOutQuint = 13,
+
+        EaseInSine = 14,
+        EaseOutSine = 15,
+        EaseInOutSine = 16,
+
+        EaseInExpo = 17,
+        EaseOutExpo = 18,
+        EaseInOutExpo = 19,
+
+        EaseInCirc = 20,
+        EaseOutCirc = 21,
+        EaseInOutCirc = 22,
+
+        EaseInBack = 23,
+        EaseOutBack = 24,
+        EaseInOutBack = 25,
+
+        EaseInElastic = 26,
+        EaseOutElastic = 27,
+        EaseInOutElastic = 28,
+
+        EaseInBounce = 29,
+        EaseOutBounce = 30,
+        EaseInOutBounce = 31
     }
 
     /// <summary>A single compiled keyframe: value at a normalized time [0..1] within its track.</summary>

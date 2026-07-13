@@ -12,7 +12,6 @@ namespace emiteat.NexUI.Editor.DebugTools
     {
         private Vector2 _scroll;
 
-        [MenuItem("Tools/NexUI/Debug Snapshot")]
         public static void Open() => GetWindow<NexUIDebugWindow>("NexUI Debug");
 
         private void OnInspectorUpdate() => Repaint();

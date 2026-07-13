@@ -30,7 +30,7 @@ namespace emiteat.NexUI.Samples.BasicRuntime
             IUISurface surface = null;
             while (surface == null)
             {
-                surface = Core.NexUI.Manager.GetSurface(_hudScreenId);
+                surface = Core.NexUIApp.Manager.GetSurface(_hudScreenId);
                 if (surface == null) yield return null;
             }
 

@@ -8,7 +8,6 @@ namespace emiteat.NexUI.Editor.IDGenerator
     {
         private NexUIIDGeneratorSettings _settings;
 
-        [MenuItem("Tools/NexUI/Generate IDs")]
         public static void Open() => GetWindow<NexUIIDGeneratorWindow>("NexUI ID Generator");
 
         private void OnEnable()

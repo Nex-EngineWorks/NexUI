@@ -2,6 +2,7 @@
   "name": "com.emiteat.nexui",
   "displayName": "NexUI",
   "version": "0.1.0",
+  "license": "MIT",
   "unity": "6000.4",
   "description": "Backend-independent runtime UI framework for Unity. Provides Screen, Layer, State, Binding, Command, Motion, Theme, Query, Debug, Settings, Validation, and optional backend integrations.",
   "keywords": [
@@ -19,6 +20,9 @@
   ],
   "author": {
     "name": "emiteat"
+  },
+  "dependencies": {
+    "com.unity.ugui": "2.0.0"
   },
   "samples": [
     {

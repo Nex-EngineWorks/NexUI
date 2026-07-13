@@ -36,7 +36,7 @@ namespace emiteat.NexUI.Debugging
         public static NexUIDebugSnapshot Capture()
         {
             if (_service.Manager == null)
-                _service.Manager = Core.NexUI.Manager;
+                _service.Manager = Core.NexUIApp.Manager;
             return _service.Capture();
         }
 
@@ -53,7 +53,7 @@ namespace emiteat.NexUI.Debugging
         private static void EnsureOverlay()
         {
             if (_overlay != null) return;
-            if (_service.Manager == null) _service.Manager = Core.NexUI.Manager;
+            if (_service.Manager == null) _service.Manager = Core.NexUIApp.Manager;
 
             var go = new GameObject("[NexUI] DebugOverlay") { hideFlags = HideFlags.HideAndDontSave };
             Object.DontDestroyOnLoad(go);

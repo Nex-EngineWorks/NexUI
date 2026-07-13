@@ -23,21 +23,36 @@ namespace emiteat.NexUI.MotionClip
             var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
             _cts = cts;
 
+            var rangeStart = 0f;
+            var rangeEnd = clip.duration;
+            var firstPass = true;
+
             do
             {
-                float elapsed = 0f;
-                Evaluate(surface, clip, 0f);
+                var elapsed = rangeStart;
+                Evaluate(surface, clip, elapsed);
 
-                while (elapsed < clip.duration)
+                while (elapsed < rangeEnd)
                 {
                     bool canceled = await UniTask.Yield(PlayerLoopTiming.Update, cts.Token).SuppressCancellationThrow();
                     if (canceled) break;
                     elapsed += Time.unscaledDeltaTime;
-                    Evaluate(surface, clip, elapsed);
+                    Evaluate(surface, clip, Mathf.Min(elapsed, rangeEnd));
                 }
 
                 if (!cts.IsCancellationRequested)
-                    Evaluate(surface, clip, clip.duration);
+                    Evaluate(surface, clip, rangeEnd);
+
+                // After the first full 0..duration pass, subsequent loops stay within the Work
+                // Area (if set) instead of replaying the whole clip - the usual "intro, then
+                // looping middle segment" idle-animation pattern (brief §6.2/Architecture-Audit
+                // Phase 3: Loop Work Area).
+                if (firstPass && clip.useWorkArea && clip.workAreaEnd > clip.workAreaStart)
+                {
+                    rangeStart = clip.workAreaStart;
+                    rangeEnd = clip.workAreaEnd;
+                }
+                firstPass = false;
             }
             while (clip.loop && !cts.IsCancellationRequested);
 

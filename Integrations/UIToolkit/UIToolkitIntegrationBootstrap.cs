@@ -44,13 +44,13 @@ namespace emiteat.NexUI.Integrations.UIToolkit
             UILayerType.Modal, UILayerType.Toast, UILayerType.Overlay
         };
 
-        /// <summary>The manager wired by this bootstrap; defaults to the shared NexUI.Manager.</summary>
+        /// <summary>The manager wired by this bootstrap; defaults to the shared NexUIApp.Manager.</summary>
         public UIManager Manager { get; private set; }
 
         private void Awake()
         {
             if (_document == null) _document = GetComponent<UIDocument>();
-            Manager = Core.NexUI.Manager;
+            Manager = Core.NexUIApp.Manager;
             Register(Manager);
         }
 

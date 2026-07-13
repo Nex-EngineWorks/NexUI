@@ -47,7 +47,7 @@ namespace emiteat.NexUI.Settings
             if (settings.bootstrapMode != NexUIBootstrapMode.RuntimeInitializeOnLoad) return;
 
             // Note: bare 'NexUI' would resolve to the namespace here; qualify with Core.
-            Apply(Core.NexUI.Manager, settings);
+            Apply(Core.NexUIApp.Manager, settings);
         }
     }
 }
