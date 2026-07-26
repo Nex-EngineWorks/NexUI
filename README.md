@@ -4,9 +4,8 @@ A backend-independent **runtime UI framework** for Unity. NexUI separates *what*
 does (screens, state, bindings, commands, motion, theme) from *how* it is rendered
 (UI Toolkit or uGUI), so the same game-side code drives either backend.
 
-> This package is the **Runtime** foundation. A visual **Designer** editor extension is
-> intentionally out of scope here, but the runtime is structured so a Designer can be added
-> later without changing the public API.
+> This package is the **Runtime** foundation. Visual authoring is provided by the separate
+> `com.emiteat.nexui.designer` package. Projects can use the Runtime package by itself.
 
 ## Architecture
 
@@ -35,10 +34,13 @@ Integrations.UGUI      → all runtime modules
 - **Query never references** Core.
 - Backends live **only** in `Integrations.*`.
 
-## Dependencies
+## Requirements
 
 - Unity **6000.4+**. Async APIs use **UniTask** (`com.cysharp.unitask`) throughout.
 - uGUI integration references `com.unity.ugui` and `Unity.TextMeshPro`.
+- Install **UniTask 2.5.10 or newer before NexUI**. UniTask is not available from Unity's
+  default registry, so a package manifest cannot resolve it by version alone. See
+  `Documentation~/installation.md` for the supported Git URL and clean-install order.
 
 ## Quick start
 
@@ -54,7 +56,7 @@ await NexUI.OpenAsync("HUD");
 ```
 
 See `Samples~/BasicRuntime`, `Samples~/UIToolkitRuntime`, `Samples~/UGUIRuntime`,
-and `Documentation~/how-to-use.md`.
+and `Documentation~/quick-start.md`.
 
 ## Optional Integrations
 
