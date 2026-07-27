@@ -18,9 +18,9 @@ namespace emiteat.NexUI.Core.Validation
                 switch (def.loadStrategy)
                 {
                     case UIScreenLoadStrategy.Addressable:
-                        if (def.backendAsset.asset == null)
-                            report.Add(UIValidationResult.Warning(ValidatorId,
-                                $"Screen '{def.ScreenId}' uses Addressable loading but has no referenced asset/key.", def));
+                        if (string.IsNullOrEmpty(def.backendAsset.resourceKey))
+                            report.Add(UIValidationResult.Error(ValidatorId,
+                                $"Screen '{def.ScreenId}' uses Addressable loading but has no resourceKey.", def));
                         break;
 
                     case UIScreenLoadStrategy.KeepAlive:

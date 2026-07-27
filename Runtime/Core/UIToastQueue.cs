@@ -26,6 +26,13 @@ namespace emiteat.NexUI.Core
         public void Enqueue(string screenId, UIOpenArgs args)
             => _queue.Enqueue(new UIToastRequest { screenId = screenId, args = args });
 
+        public bool TryActivate(string screenId)
+        {
+            if (ActiveScreenId != null) return false;
+            ActiveScreenId = screenId;
+            return true;
+        }
+
         public bool TryDequeue(out UIToastRequest request)
         {
             if (_queue.Count == 0) { request = default; return false; }

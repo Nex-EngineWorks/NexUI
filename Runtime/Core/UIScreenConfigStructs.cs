@@ -73,6 +73,8 @@ namespace emiteat.NexUI.Core
         public emiteat.NexUI.Abstractions.UIRenderBackend backend;
         public UnityEngine.Object asset;
         public UnityEngine.Object[] styleAssets;
+        /// <summary>Resources/Addressables key used when loadStrategy is Addressable.</summary>
+        public string resourceKey;
     }
 
     [Serializable]

@@ -52,8 +52,13 @@ namespace emiteat.NexUI.Integrations.UGUI
             foreach (var tag in tags)
             {
                 var id = tag.ResolveId;
-                if (!string.IsNullOrEmpty(id) && !_tagged.ContainsKey(id))
-                    _tagged[id] = tag.gameObject;
+                if (string.IsNullOrEmpty(id)) continue;
+                if (_tagged.TryGetValue(id, out var duplicate))
+                {
+                    Debug.LogError($"[NexUI] Duplicate uGUI binding id '{id}' on '{duplicate.name}' and '{tag.name}'. The first object remains indexed.", _root);
+                    continue;
+                }
+                _tagged[id] = tag.gameObject;
             }
         }
 

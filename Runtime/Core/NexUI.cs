@@ -22,6 +22,8 @@ namespace emiteat.NexUI.Core
         public static UniTask CloseAsync(string screenId, UICloseArgs args = default) => Manager.CloseAsync(screenId, args);
         public static UniTask ToggleAsync(string screenId) => Manager.ToggleAsync(screenId);
         public static UniTask BackAsync() => Manager.BackAsync();
+        public static UniTask PreloadAsync() => Manager.PreloadAsync();
+        public static UniTask PreloadAsync(string screenId) => Manager.PreloadAsync(screenId);
 
         // ---- Fire-and-forget sync API --------------------------------------
 
@@ -37,5 +39,8 @@ namespace emiteat.NexUI.Core
         public static void RegisterScreen(UIScreenDefinition definition) => Manager.RegisterScreen(definition);
         public static void RegisterFactory(IUIScreenFactory factory) => Manager.RegisterFactory(factory);
         public static void RegisterFocusAdapter(IUIFocusAdapter adapter) => Manager.RegisterFocusAdapter(adapter);
+        public static void RegisterResourceProvider(IUIResourceProvider provider) => Manager.ResourceProvider = provider;
+        public static void RegisterOverrideApplier(UIRenderBackend backend, UIScreenPropertyOverrideApplier applier)
+            => Manager.RegisterOverrideApplier(backend, applier);
     }
 }

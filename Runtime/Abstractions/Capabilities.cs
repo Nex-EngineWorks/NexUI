@@ -59,4 +59,17 @@ namespace emiteat.NexUI.Abstractions
     {
         Vector2 SizeDelta { get; set; }
     }
+
+    /// <summary>Portable color channels used by typed style overrides.</summary>
+    public interface IUIColorCapability
+    {
+        Color BackgroundColor { get; set; }
+        Color TextColor { get; set; }
+    }
+
+    /// <summary>Portable typography subset shared by uGUI and UI Toolkit.</summary>
+    public interface IUITypographyCapability
+    {
+        float FontSize { get; set; }
+    }
 }

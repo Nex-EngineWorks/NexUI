@@ -10,20 +10,24 @@ namespace emiteat.NexUI.Core
     /// </summary>
     public sealed class UIPolicyRunner
     {
-        private readonly HashSet<string> _pausers = new HashSet<string>();
-        private readonly HashSet<string> _cursorShowers = new HashSet<string>();
+        private readonly Dictionary<string, UITimePolicy> _timePolicies = new Dictionary<string, UITimePolicy>();
+        private readonly Dictionary<string, CursorPolicy> _cursorPolicies = new Dictionary<string, CursorPolicy>();
+        private readonly List<string> _cursorOrder = new List<string>();
         private float _cachedTimeScale = 1f;
+        private bool _cachedCursorVisible;
+        private CursorLockMode _cachedCursorLockState;
 
         public void Apply(UIScreenInstance instance)
         {
             var p = instance.Definition.policy;
 
-            if (p.pauseGameBehind || p.timePolicy == UITimePolicy.PauseWhileOpen)
+            var timePolicy = p.pauseGameBehind ? UITimePolicy.PauseWhileOpen : p.timePolicy;
+            if (timePolicy != UITimePolicy.Unchanged)
             {
-                if (_pausers.Count == 0)
+                if (_timePolicies.Count == 0)
                     _cachedTimeScale = Time.timeScale;
-                _pausers.Add(instance.ScreenId);
-                Time.timeScale = 0f;
+                _timePolicies[instance.ScreenId] = timePolicy;
+                ApplyTimePolicy();
             }
 
             ApplyCursor(instance.ScreenId, p.cursorPolicy);
@@ -33,23 +37,59 @@ namespace emiteat.NexUI.Core
         {
             var p = instance.Definition.policy;
 
-            if (_pausers.Remove(instance.ScreenId) && _pausers.Count == 0)
-                Time.timeScale = _cachedTimeScale;
-
-            if (_cursorShowers.Remove(instance.ScreenId) && _cursorShowers.Count == 0)
+            if (_timePolicies.Remove(instance.ScreenId))
             {
-                // Nothing forcing the cursor visible anymore; leave as-is.
+                if (_timePolicies.Count == 0) Time.timeScale = _cachedTimeScale;
+                else ApplyTimePolicy();
             }
 
-            _ = p; // policy currently only affects pause + cursor at runtime.
+            RevertCursor(instance.ScreenId);
+
+        }
+
+        private void ApplyTimePolicy()
+        {
+            foreach (var policy in _timePolicies.Values)
+                if (policy == UITimePolicy.PauseWhileOpen)
+                {
+                    Time.timeScale = 0f;
+                    return;
+                }
+            Time.timeScale = _cachedTimeScale * 0.25f;
         }
 
         private void ApplyCursor(string screenId, CursorPolicy policy)
         {
+            if (policy == CursorPolicy.Unchanged) return;
+            if (_cursorPolicies.Count == 0)
+            {
+                _cachedCursorVisible = Cursor.visible;
+                _cachedCursorLockState = Cursor.lockState;
+            }
+            _cursorPolicies[screenId] = policy;
+            _cursorOrder.Remove(screenId);
+            _cursorOrder.Add(screenId);
+            SetCursor(policy);
+        }
+
+        private void RevertCursor(string screenId)
+        {
+            if (!_cursorPolicies.Remove(screenId)) return;
+            _cursorOrder.Remove(screenId);
+            if (_cursorOrder.Count == 0)
+            {
+                Cursor.visible = _cachedCursorVisible;
+                Cursor.lockState = _cachedCursorLockState;
+                return;
+            }
+            SetCursor(_cursorPolicies[_cursorOrder[_cursorOrder.Count - 1]]);
+        }
+
+        private static void SetCursor(CursorPolicy policy)
+        {
             switch (policy)
             {
                 case CursorPolicy.ForceVisible:
-                    _cursorShowers.Add(screenId);
                     Cursor.visible = true;
                     Cursor.lockState = CursorLockMode.None;
                     break;
@@ -68,9 +108,15 @@ namespace emiteat.NexUI.Core
 
         public void Reset()
         {
-            _pausers.Clear();
-            _cursorShowers.Clear();
-            Time.timeScale = _cachedTimeScale;
+            if (_timePolicies.Count > 0) Time.timeScale = _cachedTimeScale;
+            _timePolicies.Clear();
+            if (_cursorPolicies.Count > 0)
+            {
+                Cursor.visible = _cachedCursorVisible;
+                Cursor.lockState = _cachedCursorLockState;
+            }
+            _cursorPolicies.Clear();
+            _cursorOrder.Clear();
         }
     }
 }

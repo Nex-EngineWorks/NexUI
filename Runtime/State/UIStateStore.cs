@@ -20,8 +20,12 @@ namespace emiteat.NexUI.State
             if (_watchers.TryGetValue(key, out var list))
             {
                 // Iterate a copy so a watcher may unsubscribe during notification.
-                for (int i = list.Count - 1; i >= 0; i--)
-                    list[i]?.Invoke(value);
+                var snapshot = list.ToArray();
+                for (int i = 0; i < snapshot.Length; i++)
+                {
+                    try { snapshot[i]?.Invoke(value); }
+                    catch (Exception ex) { Debug.LogException(ex); }
+                }
             }
         }
 
@@ -73,7 +77,10 @@ namespace emiteat.NexUI.State
             return new Subscription(() =>
             {
                 if (_watchers.TryGetValue(key, out var l))
+                {
                     l.Remove(Wrapper);
+                    if (l.Count == 0) _watchers.Remove(key);
+                }
             });
         }
 

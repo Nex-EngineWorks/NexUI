@@ -45,6 +45,8 @@ namespace emiteat.NexUI.Integrations.UIToolkit
             Add<IUISizeCapability>(new VeSize(_element));
             Add<IUIPointerCapability>(new VePointer(_element));
             Add<IUIFocusCapability>(new VeFocus(_element));
+            Add<IUIColorCapability>(new VeColor(_element));
+            Add<IUITypographyCapability>(new VeTypography(_element));
 
             switch (_element)
             {
@@ -151,6 +153,21 @@ namespace emiteat.NexUI.Integrations.UIToolkit
                 get => new Vector2(_ve.resolvedStyle.width, _ve.resolvedStyle.height);
                 set { _ve.style.width = value.x; _ve.style.height = value.y; }
             }
+        }
+
+        private sealed class VeColor : IUIColorCapability
+        {
+            private readonly VisualElement _ve;
+            public VeColor(VisualElement ve) => _ve = ve;
+            public Color BackgroundColor { get => _ve.resolvedStyle.backgroundColor; set => _ve.style.backgroundColor = value; }
+            public Color TextColor { get => _ve.resolvedStyle.color; set => _ve.style.color = value; }
+        }
+
+        private sealed class VeTypography : IUITypographyCapability
+        {
+            private readonly VisualElement _ve;
+            public VeTypography(VisualElement ve) => _ve = ve;
+            public float FontSize { get => _ve.resolvedStyle.fontSize; set => _ve.style.fontSize = value; }
         }
 
         private sealed class VeText : IUITextCapability

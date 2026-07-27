@@ -72,6 +72,11 @@ namespace emiteat.NexUI.Integrations.UGUI
 
             var graphic = _go.GetComponent<Graphic>();
             if (graphic != null) Add<IUIStyleCapability>(new UguiStyle(graphic));
+            var textGraphic = tmp as Graphic ?? _go.GetComponent<Text>();
+            if (graphic != null || textGraphic != null)
+                Add<IUIColorCapability>(new UguiColor(graphic, textGraphic));
+            if (tmp != null) Add<IUITypographyCapability>(new TmpTypography(tmp));
+            else if (_go.GetComponent<Text>() is { } legacyText) Add<IUITypographyCapability>(new LegacyTypography(legacyText));
         }
 
         // ---- Capability adapters -------------------------------------------
@@ -208,6 +213,29 @@ namespace emiteat.NexUI.Integrations.UGUI
                 if (tokenKey.StartsWith("color.") && ColorUtility.TryParseHtmlString(value, out var c))
                     _graphic.color = c;
             }
+        }
+
+        private sealed class UguiColor : IUIColorCapability
+        {
+            private readonly Graphic _background;
+            private readonly Graphic _text;
+            public UguiColor(Graphic background, Graphic text) { _background = background; _text = text; }
+            public Color BackgroundColor { get => _background != null ? _background.color : Color.clear; set { if (_background != null) _background.color = value; } }
+            public Color TextColor { get => _text != null ? _text.color : Color.white; set { if (_text != null) _text.color = value; } }
+        }
+
+        private sealed class TmpTypography : IUITypographyCapability
+        {
+            private readonly TMP_Text _text;
+            public TmpTypography(TMP_Text text) => _text = text;
+            public float FontSize { get => _text.fontSize; set => _text.fontSize = value; }
+        }
+
+        private sealed class LegacyTypography : IUITypographyCapability
+        {
+            private readonly Text _text;
+            public LegacyTypography(Text text) => _text = text;
+            public float FontSize { get => _text.fontSize; set => _text.fontSize = Mathf.RoundToInt(value); }
         }
     }
 }

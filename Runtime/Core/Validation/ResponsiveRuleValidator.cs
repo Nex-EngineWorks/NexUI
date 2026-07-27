@@ -38,7 +38,8 @@ namespace emiteat.NexUI.Core.Validation
                     for (int j = i + 1; j < def.responsiveRules.Length; j++)
                     {
                         var other = def.responsiveRules[j];
-                        if (other == null || other.inputMode != r.inputMode) continue;
+                        if (other == null) continue;
+                        if (other.constrainInputMode && r.constrainInputMode && other.inputMode != r.inputMode) continue;
                         if (RangesOverlap(r, other))
                             report.Add(UIValidationResult.Warning(ValidatorId,
                                 $"Responsive rules '{r.ruleId}' and '{other.ruleId}' on '{def.ScreenId}' overlap for the same input mode.", def));

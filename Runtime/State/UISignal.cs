@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace emiteat.NexUI.State
 {
@@ -26,8 +27,12 @@ namespace emiteat.NexUI.State
             {
                 if (_comparer.Equals(_value, value)) return;
                 _value = value;
-                for (int i = _listeners.Count - 1; i >= 0; i--)
-                    _listeners[i]?.Invoke(value);
+                var snapshot = _listeners.ToArray();
+                for (int i = 0; i < snapshot.Length; i++)
+                {
+                    try { snapshot[i]?.Invoke(value); }
+                    catch (Exception ex) { Debug.LogException(ex); }
+                }
             }
         }
 
@@ -36,7 +41,11 @@ namespace emiteat.NexUI.State
         {
             if (listener == null) return EmptyDisposable.Instance;
             _listeners.Add(listener);
-            if (fireImmediately) listener(_value);
+            if (fireImmediately)
+            {
+                try { listener(_value); }
+                catch (Exception ex) { Debug.LogException(ex); }
+            }
             return new Unsub(() => _listeners.Remove(listener));
         }
 

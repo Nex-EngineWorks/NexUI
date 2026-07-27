@@ -19,6 +19,7 @@ namespace emiteat.NexUI.Core
         public Vector2Int minResolution;
         public Vector2Int maxResolution;
         public UIInputMode inputMode;
+        public bool constrainInputMode;
         public List<UIResponsiveOverride> overrides = new();
     }
 
