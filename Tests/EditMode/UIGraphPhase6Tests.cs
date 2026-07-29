@@ -373,7 +373,8 @@ namespace emiteat.NexUI.Tests.EditMode
             await executor.RunEventAsync("Start", new UIGraphExecutionContext { Surface = new FakeSurface("s") });
 
             CollectionAssert.AreEqual(new[] { "a", "b" }, started);
-            CollectionAssert.AreEqual(new[] { "a", "b" }, completed);
+            CollectionAssert.AreEqual(new[] { "b", "a" }, completed,
+                "A parent node completes after the downstream node it awaited.");
         }
 
         [Test]

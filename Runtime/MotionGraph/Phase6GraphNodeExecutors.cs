@@ -208,11 +208,17 @@ namespace emiteat.NexUI.MotionGraph
 
             using (var cts = CancellationTokenSource.CreateLinkedTokenSource(args.CancellationToken))
             {
-                var branches = new UniTask[args.Node.flowOutputs.Length];
+                var branches = new List<UniTask>();
                 for (var i = 0; i < args.Node.flowOutputs.Length; i++)
-                    branches[i] = args.RunNext(args.Node.flowOutputs[i].name, cts.Token);
+                {
+                    var output = args.Node.flowOutputs[i];
+                    // Completed is the continuation after the race, not one of its competitors.
+                    // Launching it here and again below executed the continuation twice.
+                    if (string.Equals(output.name, "Completed", StringComparison.OrdinalIgnoreCase)) continue;
+                    branches.Add(args.RunNext(output.name, cts.Token));
+                }
 
-                await UniTask.WhenAny(branches);
+                if (branches.Count > 0) await UniTask.WhenAny(branches);
                 cts.Cancel();
             }
 
