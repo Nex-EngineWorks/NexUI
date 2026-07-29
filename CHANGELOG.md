@@ -11,7 +11,7 @@ All notable changes to this package are documented here. The format is based on
   `UIMotionClipTrack`/`PropertyTrack`/`Keyframe`/`Value`, `UIMotionClipEvaluator`,
   `UIMotionClipTargetResolver`, `IUIMotionClipPlayer`/`UIMotionClipPlayer`) parallel to (and
   independent of) the existing step-based `Motion` module. Editor authoring lives in the
-  Designer package (`Tools/NexUI/Designer/Motion Clip Editor`).
+  Designer package (`Tools/NexUI/Utilities > Motion Clip Editor`).
 - `UIManager.PlayMotionClipAsync` extension method (`UIManagerMotionClipExtensions`) — plays a
   `UIMotionClip` against a currently open screen's surface, without any change to `UIManager`
   itself.
