@@ -1,0 +1,53 @@
+/*
+ * NexUI base USS (UI Toolkit).
+ * Utility classes used by the State UIClassBinder and by screen authors. Colors here are
+ * neutral placeholders; drive real values through Theme tokens / IUIThemeApplier.
+ */
+
+.nx-hidden {
+    display: none;
+}
+
+.nx-disabled {
+    opacity: 0.5;
+}
+
+.nx-surface {
+    flex-grow: 1;
+}
+
+.nx-panel {
+    background-color: rgb(30, 30, 34);
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+    border-bottom-left-radius: 8px;
+    border-bottom-right-radius: 8px;
+    padding: 12px;
+}
+
+.nx-button {
+    background-color: rgb(59, 130, 246);
+    color: rgb(245, 245, 245);
+    border-top-left-radius: 6px;
+    border-top-right-radius: 6px;
+    border-bottom-left-radius: 6px;
+    border-bottom-right-radius: 6px;
+    padding: 8px 14px;
+}
+
+.nx-button:hover {
+    background-color: rgb(37, 99, 235);
+}
+
+.nx-danger {
+    background-color: rgb(220, 38, 38);
+}
+
+/* Default keyboard focus-ring (B3: basic keyboard-navigation support by default).
+   Screen authors can override with their own Theme token-driven style; this is only the
+   fallback so a focused element is never invisible out of the box. */
+:focus {
+    outline-color: rgb(96, 165, 250);
+    outline-width: 2px;
+    outline-offset: 1px;
+}
