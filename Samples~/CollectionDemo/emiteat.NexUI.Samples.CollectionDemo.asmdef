@@ -1,0 +1,24 @@
+{
+    "name": "emiteat.NexUI.Samples.CollectionDemo",
+    "rootNamespace": "emiteat.NexUI.Samples.CollectionDemo",
+    "references": [
+        "emiteat.NexUI.Abstractions",
+        "emiteat.NexUI.Core",
+        "emiteat.NexUI.State",
+        "emiteat.NexUI.Components",
+        "emiteat.NexUI.Integrations.UIToolkit",
+        "emiteat.NexUI.Integrations.UGUI",
+        "Unity.TextMeshPro",
+        "UnityEngine.UI",
+        "UniTask"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

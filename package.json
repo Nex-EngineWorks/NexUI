@@ -64,6 +64,11 @@
       "displayName": "Motion Clip Demo",
       "description": "Minimal Motion Clip Editor sample: scale+alpha panel-open animation played via UIManager.PlayMotionClipAsync.",
       "path": "Samples~/MotionClipDemo"
+    },
+    {
+      "displayName": "Collection Demo",
+      "description": "CollectionView sample: 10,000 virtualized rows, selection, scroll-to, and the loading/empty/error states on both backends.",
+      "path": "Samples~/CollectionDemo"
     }
   ]
 }

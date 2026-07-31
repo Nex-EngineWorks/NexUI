@@ -132,6 +132,36 @@ namespace emiteat.NexUI.Integrations.UGUI
         /// <summary>Raised when the selected index changes. <see cref="Controller"/> reports multi-selection.</summary>
         public event Action<int> SelectionChanged;
 
+        /// <summary>The prototype item view. Assigned by the Designer when it writes the prefab.</summary>
+        public RectTransform ItemTemplate
+        {
+            get => m_ItemTemplate;
+            set => m_ItemTemplate = value;
+        }
+
+        /// <summary>Roots shown for the non-content states. Any of them may be null.</summary>
+        public void SetStateViews(GameObject loading, GameObject empty, GameObject error)
+        {
+            m_LoadingView = loading;
+            m_EmptyView = empty;
+            m_ErrorView = error;
+        }
+
+        /// <summary>
+        /// Writes authored options into the serialized fields without touching the live view.
+        /// </summary>
+        /// <remarks>
+        /// The <see cref="Options"/> setter rebuilds the realized window, which is right at runtime
+        /// and wrong when an editor tool is writing a prefab that is not playing. This writes the
+        /// fields only, so what the Designer saved is what the component deserializes with.
+        /// </remarks>
+        public void ApplyAuthoredOptions(NXCollectionOptions options)
+        {
+            if (options == null) return;
+            _controller.Options = options;
+            ApplyOptionsToFields();
+        }
+
         protected override void Awake()
         {
             base.Awake();
