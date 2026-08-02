@@ -6,6 +6,16 @@ All notable changes to this package are documented here. The format is based on
 ## [Unreleased]
 
 ### Added
+- Two-way text/value binding modes, backend input capabilities, and keyed forward/back converter registry.
+- Live `UIScreenContract` capability validation against resolved screen surfaces.
+- Motion Graph parallel completion policies: all, any, and fire-and-forget.
+- Public configuration for rounded rectangles, gradients, and soft shadows used by Studio backend generation.
+- Windows, macOS, and Linux package validation, including portable paths, filenames, assemblies, and runtime source checks.
+
+### Fixed
+- UI Toolkit numeric style parsing now uses invariant culture so decimal values behave consistently on every host locale.
+
+### Added (Motion Clip)
 - **MotionClip** module (`Runtime/MotionClip/`, new `emiteat.NexUI.MotionClip` asmdef): a
   multi-element, multi-property, keyframe-based animation system (`UIMotionClip`,
   `UIMotionClipTrack`/`PropertyTrack`/`Keyframe`/`Value`, `UIMotionClipEvaluator`,

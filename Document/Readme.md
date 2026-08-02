@@ -6,7 +6,7 @@ NexUI는 UI가 *무엇을 하는지*(화면, 상태, 바인딩, 커맨드, 모�
 (UI Toolkit 또는 uGUI)를 분리합니다. 덕분에 동일한 게임 측 코드로 두 백엔드를 모두 구동할 수
 있습니다. 비동기 API는 **UniTask**를 사용합니다.
 
-- **패키지:** `com.emiteat.nexui`
+- **패키지:** `com.nexengineworks.nexui`
 - **버전:** 0.1.0
 - **Unity:** 6000.4+
 - **루트 네임스페이스:** `emiteat.NexUI`
@@ -49,4 +49,4 @@ Integrations  UIToolkit, UGUI, DOTween, VContainer, MessagePipe, Addressables, I
 
 ## 함께 쓰는 패키지
 
-비주얼 에디터는 별도 패키지에 있습니다: **`com.emiteat.nexui.designer`** (NexUI Designer).
+비주얼 에디터는 별도 패키지에 있습니다: **`com.nexengineworks.nexui.studio`** (NexUI Studio).

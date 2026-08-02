@@ -11,13 +11,16 @@ namespace emiteat.NexUI.Core.Validation
     {
         public IReadOnlyList<UIScreenDefinition> Definitions { get; }
         public ISet<UIRenderBackend> AvailableBackends { get; }
+        public IReadOnlyDictionary<string, IUISurface> LiveSurfaces { get; }
 
         public UIValidationContext(
             IReadOnlyList<UIScreenDefinition> definitions,
-            ISet<UIRenderBackend> availableBackends = null)
+            ISet<UIRenderBackend> availableBackends = null,
+            IReadOnlyDictionary<string, IUISurface> liveSurfaces = null)
         {
             Definitions = definitions ?? new List<UIScreenDefinition>();
             AvailableBackends = availableBackends ?? new HashSet<UIRenderBackend>();
+            LiveSurfaces = liveSurfaces ?? new Dictionary<string, IUISurface>();
         }
     }
 }

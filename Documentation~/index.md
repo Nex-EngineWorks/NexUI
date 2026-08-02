@@ -1,7 +1,7 @@
 # NexUI Runtime documentation
 
 NexUI is a backend-independent runtime UI framework for Unity. Install the Runtime package
-first, then optionally add NexUI Designer for visual authoring.
+first, then optionally add NexUI Studio for visual authoring.
 
 ## Start here
 

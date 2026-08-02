@@ -66,5 +66,68 @@ namespace emiteat.NexUI.Tests.EditMode
 
             Assert.AreEqual(0.75f, value.Value);
         }
+
+        [Test]
+        public void ValueBinder_TwoWayUpdatesStoreFromInputWithoutFeedbackLoop()
+        {
+            var store = new UIStateStore();
+            store.Set("volume", 0.25f);
+            var input = new FakeValueInput();
+            var handle = new FakeElementHandle("slider")
+                .With<IUIValueCapability>(input)
+                .With<IUIValueInputCapability>(input);
+            var binder = new UIValueBinder(UIBindingMode.TwoWay);
+
+            binder.Bind(handle, "volume", store);
+            Assert.AreEqual(0.25f, input.Value);
+            input.Raise(0.8f);
+
+            Assert.AreEqual(0.8f, store.Get<float>("volume"));
+            binder.Unbind();
+        }
+
+        [Test]
+        public void TextBinder_TwoWayUsesParseAndFormat()
+        {
+            var store = new UIStateStore();
+            store.Set<object>("count", 3);
+            var input = new FakeTextInput();
+            var handle = new FakeElementHandle("field")
+                .With<IUITextCapability>(input)
+                .With<IUITextInputCapability>(input);
+            var binder = new UITextBinder(UIBindingMode.TwoWay,
+                value => $"#{value}", text => int.Parse(text.TrimStart('#')));
+
+            binder.Bind(handle, "count", store);
+            Assert.AreEqual("#3", input.Text);
+            input.Raise("#7");
+
+            Assert.AreEqual(7, store.Get<object>("count"));
+            binder.Unbind();
+        }
+
+        [Test]
+        public void PropertyValueBinder_TwoWayUsesConverterBack()
+        {
+            var source = new BindableProperty<int>(2);
+            var input = new FakeValueInput();
+            var handle = new FakeElementHandle("stepper")
+                .With<IUIValueCapability>(input)
+                .With<IUIValueInputCapability>(input);
+            var binder = new PropertyValueBinder<int>(new IntFloatConverter(), UIBindingMode.TwoWay);
+
+            binder.Bind(handle, source);
+            Assert.AreEqual(2f, input.Value);
+            input.Raise(9f);
+
+            Assert.AreEqual(9, source.Value);
+            binder.Unbind();
+        }
+
+        private sealed class IntFloatConverter : IValueConverter<int, float>
+        {
+            public float Convert(int source) => source;
+            public int ConvertBack(float target) => UnityEngine.Mathf.RoundToInt(target);
+        }
     }
 }

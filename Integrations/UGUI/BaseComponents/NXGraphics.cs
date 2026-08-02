@@ -41,6 +41,12 @@ namespace emiteat.NexUI.Integrations.UGUI
             set { m_BorderWidth = value; SetVerticesDirty(); }
         }
 
+        public Color BorderColor
+        {
+            get => m_BorderColor;
+            set { m_BorderColor = value; SetVerticesDirty(); }
+        }
+
         protected override void OnPopulateMesh(VertexHelper vh)
         {
             vh.Clear();
@@ -127,6 +133,10 @@ namespace emiteat.NexUI.Integrations.UGUI
         [SerializeField] private Color m_BottomRight = Color.gray;
         [SerializeField] private Color m_BottomLeft = Color.gray;
 
+        public Color StartColor { get => m_Start; set { m_Start = value; graphic?.SetVerticesDirty(); } }
+        public Color EndColor { get => m_End; set { m_End = value; graphic?.SetVerticesDirty(); } }
+        public float Angle { get => m_Angle; set { m_Angle = Mathf.Repeat(value, 360f); graphic?.SetVerticesDirty(); } }
+
         public override void ModifyMesh(VertexHelper vh)
         {
             if (!IsActive() || vh.currentVertCount == 0) return;
@@ -188,6 +198,10 @@ namespace emiteat.NexUI.Integrations.UGUI
         [SerializeField, Range(0f, 32f)] private float m_Spread = 6f;
         [SerializeField, Range(1, 8), Tooltip("Copies used to fake the blur. More is smoother and costs more vertices.")]
         private int m_Steps = 4;
+
+        public Color ShadowColor { get => m_Color; set { m_Color = value; graphic?.SetVerticesDirty(); } }
+        public Vector2 Offset { get => m_Offset; set { m_Offset = value; graphic?.SetVerticesDirty(); } }
+        public float Spread { get => m_Spread; set { m_Spread = Mathf.Max(0f, value); graphic?.SetVerticesDirty(); } }
 
         public override void ModifyMesh(VertexHelper vh)
         {

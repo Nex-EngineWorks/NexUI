@@ -57,13 +57,33 @@ namespace emiteat.NexUI.Integrations.UGUI
             var slider = _go.GetComponent<Slider>();
             if (slider != null)
             {
-                Add<IUIValueCapability>(new UguiValue(slider));
+                var value = new UguiValue(slider);
+                Add<IUIValueCapability>(value);
+                Add<IUIValueInputCapability>(value);
                 if (!Has<IUIInteractableCapability>())
                     Add<IUIInteractableCapability>(new UguiSelectableInteractable(slider));
             }
 
+            var tmpInput = _go.GetComponent<TMP_InputField>();
+            var legacyInput = _go.GetComponent<InputField>();
             var tmp = _go.GetComponent<TMP_Text>();
-            if (tmp != null) Add<IUITextCapability>(new TmpText(tmp));
+            if (tmpInput != null)
+            {
+                var input = new TmpInputText(tmpInput);
+                Add<IUITextCapability>(input);
+                Add<IUITextInputCapability>(input);
+                if (!Has<IUIInteractableCapability>())
+                    Add<IUIInteractableCapability>(new UguiSelectableInteractable(tmpInput));
+            }
+            else if (legacyInput != null)
+            {
+                var input = new LegacyInputText(legacyInput);
+                Add<IUITextCapability>(input);
+                Add<IUITextInputCapability>(input);
+                if (!Has<IUIInteractableCapability>())
+                    Add<IUIInteractableCapability>(new UguiSelectableInteractable(legacyInput));
+            }
+            else if (tmp != null) Add<IUITextCapability>(new TmpText(tmp));
             else
             {
                 var text = _go.GetComponent<Text>();
@@ -170,13 +190,42 @@ namespace emiteat.NexUI.Integrations.UGUI
             public bool Interactable { get => _selectable.interactable; set => _selectable.interactable = value; }
         }
 
-        private sealed class UguiValue : IUIValueCapability
+        private sealed class UguiValue : IUIValueInputCapability
         {
             private readonly Slider _slider;
             public UguiValue(Slider slider) => _slider = slider;
             public float Value { get => _slider.value; set => _slider.value = value; }
             public float Min { get => _slider.minValue; set => _slider.minValue = value; }
             public float Max { get => _slider.maxValue; set => _slider.maxValue = value; }
+            public event Action<float> ValueChanged
+            {
+                add => _slider.onValueChanged.AddListener(value.Invoke);
+                remove => _slider.onValueChanged.RemoveListener(value.Invoke);
+            }
+        }
+
+        private sealed class TmpInputText : IUITextInputCapability
+        {
+            private readonly TMP_InputField _input;
+            public TmpInputText(TMP_InputField input) => _input = input;
+            public string Text { get => _input.text; set => _input.SetTextWithoutNotify(value ?? string.Empty); }
+            public event Action<string> TextChanged
+            {
+                add => _input.onValueChanged.AddListener(value.Invoke);
+                remove => _input.onValueChanged.RemoveListener(value.Invoke);
+            }
+        }
+
+        private sealed class LegacyInputText : IUITextInputCapability
+        {
+            private readonly InputField _input;
+            public LegacyInputText(InputField input) => _input = input;
+            public string Text { get => _input.text; set => _input.SetTextWithoutNotify(value ?? string.Empty); }
+            public event Action<string> TextChanged
+            {
+                add => _input.onValueChanged.AddListener(value.Invoke);
+                remove => _input.onValueChanged.RemoveListener(value.Invoke);
+            }
         }
 
         private sealed class TmpText : IUITextCapability

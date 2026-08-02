@@ -9,12 +9,24 @@ namespace emiteat.NexUI.Abstractions
         string Text { get; set; }
     }
 
+    /// <summary>Editable text capability. Raised for user-originated and native control changes.</summary>
+    public interface IUITextInputCapability : IUITextCapability
+    {
+        event Action<string> TextChanged;
+    }
+
     /// <summary>Scalar value capability (progress bars, sliders, radial fills).</summary>
     public interface IUIValueCapability
     {
         float Value { get; set; }
         float Min { get; set; }
         float Max { get; set; }
+    }
+
+    /// <summary>Editable scalar capability such as a slider.</summary>
+    public interface IUIValueInputCapability : IUIValueCapability
+    {
+        event Action<float> ValueChanged;
     }
 
     /// <summary>Show / hide capability, independent of transform opacity.</summary>

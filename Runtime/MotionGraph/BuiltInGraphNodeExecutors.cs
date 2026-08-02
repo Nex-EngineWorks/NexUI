@@ -56,7 +56,10 @@ namespace emiteat.NexUI.MotionGraph
         }
     }
 
-    /// <summary>Launches every flow output concurrently and waits for all of them (brief's "All Finished" completion policy; "Any Finished"/"Do Not Wait" are not implemented yet - see Architecture-Audit.md).</summary>
+    /// <summary>
+    /// Launches every flow output concurrently. Completion Policy accepts All Finished (default),
+    /// Any Finished, or Do Not Wait.
+    /// </summary>
     public sealed class ParallelNodeExecutor : IUIGraphNodeExecutor
     {
         public string NodeType => "Flow.Parallel";
@@ -66,7 +69,26 @@ namespace emiteat.NexUI.MotionGraph
             var branches = new List<UniTask>();
             foreach (var output in args.Node.flowOutputs)
                 branches.Add(args.RunNext(output.name, args.CancellationToken));
-            await UniTask.WhenAll(branches);
+
+            if (branches.Count == 0) return;
+            var policy = (args.ResolveInput("Completion Policy").stringValue ?? "All Finished")
+                .Replace(" ", string.Empty).Replace("_", string.Empty).ToLowerInvariant();
+            switch (policy)
+            {
+                case "donotwait":
+                case "fireandforget":
+                    foreach (var branch in branches) branch.Forget();
+                    return;
+
+                case "anyfinished":
+                case "any":
+                    await UniTask.WhenAny(branches);
+                    return;
+
+                default:
+                    await UniTask.WhenAll(branches);
+                    return;
+            }
         }
     }
 

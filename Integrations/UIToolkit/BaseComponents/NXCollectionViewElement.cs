@@ -310,7 +310,7 @@ namespace emiteat.NexUI.Integrations.UIToolkit
             });
         }
 
-        private int IndexOf(VisualElement view)
+        private new int IndexOf(VisualElement view)
         {
             foreach (var pair in _realized)
                 if (pair.Value == view) return pair.Key;

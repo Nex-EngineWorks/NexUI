@@ -17,6 +17,22 @@ namespace emiteat.NexUI.Tests.Fakes
         public float Max { get; set; } = 1f;
     }
 
+    public sealed class FakeTextInput : IUITextInputCapability
+    {
+        public string Text { get; set; }
+        public event Action<string> TextChanged;
+        public void Raise(string value) { Text = value; TextChanged?.Invoke(value); }
+    }
+
+    public sealed class FakeValueInput : IUIValueInputCapability
+    {
+        public float Value { get; set; }
+        public float Min { get; set; }
+        public float Max { get; set; } = 1f;
+        public event Action<float> ValueChanged;
+        public void Raise(float value) { Value = value; ValueChanged?.Invoke(value); }
+    }
+
     public sealed class FakeVisibility : IUIVisibilityCapability { public bool Visible { get; set; } = true; }
     public sealed class FakeInteractable : IUIInteractableCapability { public bool Interactable { get; set; } = true; }
 

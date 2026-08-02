@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using emiteat.NexUI.Abstractions;
+using System.Globalization;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -50,6 +51,24 @@ namespace emiteat.NexUI.Integrations.UIToolkit
 
             switch (_element)
             {
+                case TextField textField:
+                    var textInput = new VeTextInput(textField);
+                    Add<IUITextCapability>(textInput);
+                    Add<IUITextInputCapability>(textInput);
+                    Add<IUIInteractableCapability>(new VeInteractable(textField));
+                    break;
+                case Slider slider:
+                    var sliderValue = new VeSliderValue(slider);
+                    Add<IUIValueCapability>(sliderValue);
+                    Add<IUIValueInputCapability>(sliderValue);
+                    Add<IUIInteractableCapability>(new VeInteractable(slider));
+                    break;
+                case SliderInt sliderInt:
+                    var sliderIntValue = new VeSliderIntValue(sliderInt);
+                    Add<IUIValueCapability>(sliderIntValue);
+                    Add<IUIValueInputCapability>(sliderIntValue);
+                    Add<IUIInteractableCapability>(new VeInteractable(sliderInt));
+                    break;
                 case Button button:
                     Add<IUITextCapability>(new VeText(button));
                     Add<IUIClickCapability>(new VeClick(button));
@@ -100,7 +119,8 @@ namespace emiteat.NexUI.Integrations.UIToolkit
                     if (tokenKey == "color.text") _ve.style.color = c;
                     else _ve.style.backgroundColor = c;
                 }
-                else if (tokenKey.StartsWith("radius.") && float.TryParse(value, out var r))
+                else if (tokenKey.StartsWith("radius.") &&
+                         float.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out var r))
                 {
                     _ve.style.borderTopLeftRadius = r;
                     _ve.style.borderTopRightRadius = r;
@@ -177,6 +197,21 @@ namespace emiteat.NexUI.Integrations.UIToolkit
             public string Text { get => _text.text; set => _text.text = value; }
         }
 
+        private sealed class VeTextInput : IUITextInputCapability
+        {
+            private readonly TextField _field;
+            public string Text { get => _field.value; set => _field.SetValueWithoutNotify(value ?? string.Empty); }
+            public event Action<string> TextChanged;
+
+            public void OnChanged(ChangeEvent<string> evt) => TextChanged?.Invoke(evt.newValue);
+
+            public VeTextInput(TextField field)
+            {
+                _field = field;
+                field.RegisterValueChangedCallback(OnChanged);
+            }
+        }
+
         private sealed class VeClick : IUIClickCapability
         {
             private readonly Button _button;
@@ -206,6 +241,34 @@ namespace emiteat.NexUI.Integrations.UIToolkit
             public float Value { get => _bar.value; set => _bar.value = value; }
             public float Min { get => _bar.lowValue; set => _bar.lowValue = value; }
             public float Max { get => _bar.highValue; set => _bar.highValue = value; }
+        }
+
+        private sealed class VeSliderValue : IUIValueInputCapability
+        {
+            private readonly Slider _slider;
+            public VeSliderValue(Slider slider)
+            {
+                _slider = slider;
+                slider.RegisterValueChangedCallback(evt => ValueChanged?.Invoke(evt.newValue));
+            }
+            public float Value { get => _slider.value; set => _slider.SetValueWithoutNotify(value); }
+            public float Min { get => _slider.lowValue; set => _slider.lowValue = value; }
+            public float Max { get => _slider.highValue; set => _slider.highValue = value; }
+            public event Action<float> ValueChanged;
+        }
+
+        private sealed class VeSliderIntValue : IUIValueInputCapability
+        {
+            private readonly SliderInt _slider;
+            public VeSliderIntValue(SliderInt slider)
+            {
+                _slider = slider;
+                slider.RegisterValueChangedCallback(evt => ValueChanged?.Invoke(evt.newValue));
+            }
+            public float Value { get => _slider.value; set => _slider.SetValueWithoutNotify(Mathf.RoundToInt(value)); }
+            public float Min { get => _slider.lowValue; set => _slider.lowValue = Mathf.RoundToInt(value); }
+            public float Max { get => _slider.highValue; set => _slider.highValue = Mathf.RoundToInt(value); }
+            public event Action<float> ValueChanged;
         }
 
         private sealed class VePointer : IUIPointerCapability

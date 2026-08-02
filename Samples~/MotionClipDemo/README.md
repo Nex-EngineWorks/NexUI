@@ -9,4 +9,4 @@ Minimal demo of the Motion Clip Editor's runtime playback path:
   and play the clip.
 
 To author your own clips instead of building them in code: `Tools/NexUI/Designer/Motion Clip
-Editor`. See `Packages/com.emiteat.nexui.designer/Documentation~/motion-clip-editor.md`.
+Editor`. See `Packages/com.nexengineworks.nexui.studio/Documentation~/motion-clip-editor.md`.

@@ -1,5 +1,5 @@
 {
-  "name": "com.emiteat.nexui",
+  "name": "com.nexengineworks.nexui",
   "displayName": "NexUI",
   "version": "0.1.0",
   "license": "MIT",
@@ -23,8 +23,8 @@
     "binding"
   ],
   "author": {
-    "name": "emiteat",
-    "url": "https://github.com/swallow-smoke"
+    "name": "OffByJun",
+    "url": "https://github.com/OffByJun"
   },
   "dependencies": {
     "com.unity.ugui": "2.0.0"

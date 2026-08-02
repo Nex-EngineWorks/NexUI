@@ -7,7 +7,7 @@ NexUI는 UI 로직을 렌더링 백엔드로부터 분리하는 Unity용 **런�
 또는 **uGUI**(혹은 화면별 혼합)로 실현합니다.
 
 이 패키지는 런타임 기반입니다. 비주얼 오소링(Unity EditorWindow)은 별도 패키지
-`com.emiteat.nexui.designer`가 제공합니다.
+`com.nexengineworks.nexui.studio`가 제공합니다.
 
 ## 왜 필요한가
 

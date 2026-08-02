@@ -18,6 +18,7 @@ namespace emiteat.NexUI.Core
         public UIScreenFocusConfig focus;
         public UIScreenRelationConfig relations;
         public UIScreenValidationConfig validation;
+        public UIScreenContract contract;
 
         /// <summary>How the manager provisions this screen's backend instance.</summary>
         public UIScreenLoadStrategy loadStrategy;

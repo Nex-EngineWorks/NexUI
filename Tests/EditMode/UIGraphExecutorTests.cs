@@ -102,6 +102,74 @@ namespace emiteat.NexUI.Tests.EditMode
         }
 
         [Test]
+        public async Task Parallel_AnyFinishedCompletesAfterFirstBranch()
+        {
+            var branchA = new GatedNodeExecutor("Test.GateA");
+            var branchB = new GatedNodeExecutor("Test.GateB");
+            var graph = MakeGraph(new[]
+            {
+                new UIGraphNode
+                {
+                    id = "p", nodeType = "Flow.Parallel",
+                    flowOutputs = new[] { new UIGraphFlowOutput("A", "a"), new UIGraphFlowOutput("B", "b") },
+                    dataInputs = new[]
+                    {
+                        new UIGraphPortSource
+                        {
+                            portName = "Completion Policy", kind = UIGraphPortSourceKind.Constant,
+                            constant = UIGraphValue.String("Any Finished")
+                        }
+                    }
+                },
+                new UIGraphNode { id = "a", nodeType = "Test.GateA" },
+                new UIGraphNode { id = "b", nodeType = "Test.GateB" }
+            }, "p");
+            var executor = new UIGraphExecutor(graph,
+                new List<IUIGraphNodeExecutor>(BuiltInGraphNodeExecutors.CreateDefaults()) { branchA, branchB });
+
+            var run = executor.RunEventAsync("Start", new UIGraphExecutionContext { Surface = new FakeSurface("s") });
+            branchA.Release();
+            await run;
+
+            Assert.IsTrue(branchB.Started);
+            branchB.Release();
+        }
+
+        [Test]
+        public async Task Parallel_DoNotWaitReturnsAfterLaunchingBranches()
+        {
+            var branchA = new GatedNodeExecutor("Test.GateA");
+            var branchB = new GatedNodeExecutor("Test.GateB");
+            var graph = MakeGraph(new[]
+            {
+                new UIGraphNode
+                {
+                    id = "p", nodeType = "Flow.Parallel",
+                    flowOutputs = new[] { new UIGraphFlowOutput("A", "a"), new UIGraphFlowOutput("B", "b") },
+                    dataInputs = new[]
+                    {
+                        new UIGraphPortSource
+                        {
+                            portName = "Completion Policy", kind = UIGraphPortSourceKind.Constant,
+                            constant = UIGraphValue.String("Do Not Wait")
+                        }
+                    }
+                },
+                new UIGraphNode { id = "a", nodeType = "Test.GateA" },
+                new UIGraphNode { id = "b", nodeType = "Test.GateB" }
+            }, "p");
+            var executor = new UIGraphExecutor(graph,
+                new List<IUIGraphNodeExecutor>(BuiltInGraphNodeExecutors.CreateDefaults()) { branchA, branchB });
+
+            await executor.RunEventAsync("Start", new UIGraphExecutionContext { Surface = new FakeSurface("s") });
+
+            Assert.IsTrue(branchA.Started);
+            Assert.IsTrue(branchB.Started);
+            branchA.Release();
+            branchB.Release();
+        }
+
+        [Test]
         public async Task Branch_TrueCondition_FollowsTrueOutput()
         {
             var log = new List<string>();
