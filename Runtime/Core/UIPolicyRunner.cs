@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityTime = UnityEngine.Time;
 
 namespace emiteat.NexUI.Core
 {
@@ -25,7 +26,7 @@ namespace emiteat.NexUI.Core
             if (timePolicy != UITimePolicy.Unchanged)
             {
                 if (_timePolicies.Count == 0)
-                    _cachedTimeScale = Time.timeScale;
+                    _cachedTimeScale = UnityTime.timeScale;
                 _timePolicies[instance.ScreenId] = timePolicy;
                 ApplyTimePolicy();
             }
@@ -39,7 +40,7 @@ namespace emiteat.NexUI.Core
 
             if (_timePolicies.Remove(instance.ScreenId))
             {
-                if (_timePolicies.Count == 0) Time.timeScale = _cachedTimeScale;
+                if (_timePolicies.Count == 0) UnityTime.timeScale = _cachedTimeScale;
                 else ApplyTimePolicy();
             }
 
@@ -52,10 +53,10 @@ namespace emiteat.NexUI.Core
             foreach (var policy in _timePolicies.Values)
                 if (policy == UITimePolicy.PauseWhileOpen)
                 {
-                    Time.timeScale = 0f;
+                    UnityTime.timeScale = 0f;
                     return;
                 }
-            Time.timeScale = _cachedTimeScale * 0.25f;
+            UnityTime.timeScale = _cachedTimeScale * 0.25f;
         }
 
         private void ApplyCursor(string screenId, CursorPolicy policy)
@@ -108,7 +109,7 @@ namespace emiteat.NexUI.Core
 
         public void Reset()
         {
-            if (_timePolicies.Count > 0) Time.timeScale = _cachedTimeScale;
+            if (_timePolicies.Count > 0) UnityTime.timeScale = _cachedTimeScale;
             _timePolicies.Clear();
             if (_cursorPolicies.Count > 0)
             {

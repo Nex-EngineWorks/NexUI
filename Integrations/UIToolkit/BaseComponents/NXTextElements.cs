@@ -2,6 +2,7 @@ using System;
 using System.Globalization;
 using UnityEngine;
 using UnityEngine.UIElements;
+using UnityTime = UnityEngine.Time;
 
 namespace emiteat.NexUI.Integrations.UIToolkit
 {
@@ -45,7 +46,7 @@ namespace emiteat.NexUI.Integrations.UIToolkit
                 return;
             }
 
-            var now = Time.realtimeSinceStartup;
+            var now = UnityTime.realtimeSinceStartup;
             if (now < _pauseUntil) return;
 
             _offset += _direction * pixelsPerSecond * 0.016f;
@@ -178,7 +179,7 @@ namespace emiteat.NexUI.Integrations.UIToolkit
 
         public NXHoldButton()
         {
-            RegisterCallback<PointerDownEvent>(_ => { _holding = true; _startTime = Time.realtimeSinceStartup; });
+            RegisterCallback<PointerDownEvent>(_ => { _holding = true; _startTime = UnityTime.realtimeSinceStartup; });
             RegisterCallback<PointerUpEvent>(_ => Cancel());
             RegisterCallback<PointerLeaveEvent>(_ => Cancel());
             schedule.Execute(Step).Every(16);
@@ -194,7 +195,7 @@ namespace emiteat.NexUI.Integrations.UIToolkit
         private void Step()
         {
             if (!_holding) return;
-            var elapsed = Time.realtimeSinceStartup - _startTime;
+            var elapsed = UnityTime.realtimeSinceStartup - _startTime;
             var normalized = holdSeconds <= 0f ? 1f : Mathf.Clamp01(elapsed / holdSeconds);
             Progress?.Invoke(normalized);
             if (normalized < 1f) return;

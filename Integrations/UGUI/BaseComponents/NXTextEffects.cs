@@ -3,6 +3,7 @@ using System.Globalization;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityTime = UnityEngine.Time;
 
 namespace emiteat.NexUI.Integrations.UGUI
 {
@@ -79,10 +80,10 @@ namespace emiteat.NexUI.Integrations.UGUI
                 return;
             }
 
-            if (_pauseTimer > 0f) { _pauseTimer -= Time.unscaledDeltaTime; return; }
+            if (_pauseTimer > 0f) { _pauseTimer -= UnityTime.unscaledDeltaTime; return; }
 
             var position = _content.anchoredPosition;
-            position.x += _direction * m_PixelsPerSecond * Time.unscaledDeltaTime;
+            position.x += _direction * m_PixelsPerSecond * UnityTime.unscaledDeltaTime;
 
             if (m_Loop)
             {
@@ -144,7 +145,7 @@ namespace emiteat.NexUI.Integrations.UGUI
         {
             if (!_playing) return;
 
-            var delta = m_Unscaled ? Time.unscaledDeltaTime : Time.deltaTime;
+            var delta = m_Unscaled ? UnityTime.unscaledDeltaTime : UnityTime.deltaTime;
             var index = Mathf.Clamp(Mathf.FloorToInt(_revealed), 0, Mathf.Max(0, _full.Length - 1));
             var pause = _full.Length > 0 && IsPunctuation(_full[index]) ? m_PunctuationPause : 0f;
 
@@ -208,7 +209,7 @@ namespace emiteat.NexUI.Integrations.UGUI
         {
             if (Math.Abs(_target - _displayed) < 0.001d) return;
 
-            var delta = m_Unscaled ? Time.unscaledDeltaTime : Time.deltaTime;
+            var delta = m_Unscaled ? UnityTime.unscaledDeltaTime : UnityTime.deltaTime;
             var step = (_target - _displayed) * Mathf.Clamp01(delta / Mathf.Max(0.0001f, m_Duration));
             _displayed += step;
             if (Math.Abs(_target - _displayed) < 0.5d) _displayed = _target;

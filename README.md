@@ -49,12 +49,12 @@ Integrations.UGUI      → all runtime modules
 3. Register and open:
 
 ```csharp
-NexUI.RegisterScreen(myScreenDefinition);
-await NexUI.OpenAsync("HUD");
+NexUIApp.RegisterScreen(myScreenDefinition);
+await NexUIApp.OpenAsync("HUD");
 ```
 
 See `Samples~/BasicRuntime`, `Samples~/UIToolkitRuntime`, `Samples~/UGUIRuntime`,
-and `Documentation~/how-to-use.md`.
+and `Documentation~/beginner-handbook-ko.md`.
 
 ## Optional Integrations
 

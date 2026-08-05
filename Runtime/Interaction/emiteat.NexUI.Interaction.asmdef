@@ -1,0 +1,20 @@
+{
+    "name": "emiteat.NexUI.Interaction",
+    "rootNamespace": "emiteat.NexUI.Interaction",
+    "references": [
+        "emiteat.NexUI.Diagnostics",
+        "emiteat.NexUI.Compiled",
+        "emiteat.NexUI.Flow",
+        "emiteat.NexUI.Time",
+        "emiteat.NexUI.Overrides"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

@@ -3,6 +3,7 @@
     "rootNamespace": "emiteat.NexUI.Integrations.DOTween",
     "references": [
         "emiteat.NexUI.Abstractions",
+        "emiteat.NexUI.Core",
         "emiteat.NexUI.Motion",
         "UniTask"
     ],

@@ -5,6 +5,7 @@ using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
+using UnityTime = UnityEngine.Time;
 
 namespace emiteat.NexUI.Integrations.UGUI
 {
@@ -258,7 +259,7 @@ namespace emiteat.NexUI.Integrations.UGUI
         {
             if (_snapElapsed >= 0f)
             {
-                _snapElapsed += Time.unscaledDeltaTime;
+                _snapElapsed += UnityTime.unscaledDeltaTime;
                 var t = Mathf.Clamp01(_snapElapsed / Mathf.Max(0.0001f, m_SnapDuration));
                 SetNormalized(Mathf.Lerp(_snapFrom, _snapTo, Mathf.SmoothStep(0f, 1f, t)));
                 if (t >= 1f) _snapElapsed = -1f;
@@ -266,7 +267,7 @@ namespace emiteat.NexUI.Integrations.UGUI
             }
 
             if (m_AutoAdvanceSeconds <= 0f) return;
-            _timer += Time.unscaledDeltaTime;
+            _timer += UnityTime.unscaledDeltaTime;
             if (_timer < m_AutoAdvanceSeconds) return;
             _timer = 0f;
             Next();

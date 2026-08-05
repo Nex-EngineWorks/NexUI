@@ -1,0 +1,16 @@
+{
+    "name": "emiteat.NexUI.Flow",
+    "rootNamespace": "emiteat.NexUI.Flow",
+    "references": [
+        "emiteat.NexUI.Diagnostics"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

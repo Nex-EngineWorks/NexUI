@@ -33,7 +33,11 @@ namespace emiteat.NexUI.Components
         private float _viewportCross;
         private float _scrollOffset;
         private int _selectionAnchor = -1;
-        private NXCollectionState _state = NXCollectionState.Content;
+        // Empty, not Content: the item count starts at zero, and this type's own rule is that
+        // Content with no items *is* Empty. Initialising the field to Content set it behind the
+        // property setter that enforces that rule, so a freshly built collection contradicted the
+        // invariant it documents until something happened to assign State.
+        private NXCollectionState _state = NXCollectionState.Empty;
         private NXCollectionRange _range = NXCollectionRange.Empty;
         private bool _loadMoreRaisedForCount = false;
 

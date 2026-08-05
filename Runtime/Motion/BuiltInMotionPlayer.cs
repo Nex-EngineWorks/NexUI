@@ -3,6 +3,7 @@ using System.Threading;
 using Cysharp.Threading.Tasks;
 using emiteat.NexUI.Abstractions;
 using UnityEngine;
+using UnityTime = UnityEngine.Time;
 
 namespace emiteat.NexUI.Motion
 {
@@ -47,7 +48,7 @@ namespace emiteat.NexUI.Motion
             {
                 bool canceled = await UniTask.Yield(PlayerLoopTiming.Update, cts.Token).SuppressCancellationThrow();
                 if (canceled) break;
-                elapsed += Time.unscaledDeltaTime;
+                elapsed += UnityTime.unscaledDeltaTime;
                 ApplyAt(cap, timeline, elapsed);
             }
 

@@ -1,0 +1,17 @@
+{
+    "name": "emiteat.NexUI.Overrides",
+    "rootNamespace": "emiteat.NexUI.Overrides",
+    "references": [
+        "emiteat.NexUI.Compiled",
+        "emiteat.NexUI.Time"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

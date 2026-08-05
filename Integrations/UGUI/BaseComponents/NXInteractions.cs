@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
+using UnityTime = UnityEngine.Time;
 
 namespace emiteat.NexUI.Integrations.UGUI
 {
@@ -69,7 +70,7 @@ namespace emiteat.NexUI.Integrations.UGUI
         {
             if (!_holding || _completed || m_HoldSeconds <= 0f) return;
 
-            _elapsed += Time.unscaledDeltaTime;
+            _elapsed += UnityTime.unscaledDeltaTime;
             m_OnHoldProgress.Invoke(Progress);
             if (_elapsed < m_HoldSeconds) return;
 
@@ -175,7 +176,7 @@ namespace emiteat.NexUI.Integrations.UGUI
         {
             if (_timer > 0f)
             {
-                _timer -= Time.unscaledDeltaTime;
+                _timer -= UnityTime.unscaledDeltaTime;
                 if (_timer <= 0f)
                 {
                     if (_hovered && !_shown) Show();

@@ -1,0 +1,17 @@
+{
+    "name": "emiteat.NexUI.Compiled",
+    "rootNamespace": "emiteat.NexUI.Compiled",
+    "references": [
+        "emiteat.NexUI.Diagnostics",
+        "emiteat.NexUI.Accessibility"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
