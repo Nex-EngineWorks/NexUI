@@ -5,6 +5,12 @@
         "emiteat.NexUI.Abstractions",
         "emiteat.NexUI.Core",
         "emiteat.NexUI.Motion",
+        "emiteat.NexUI.Compiled",
+        "emiteat.NexUI.Overrides",
+        "emiteat.NexUI.Flow",
+        "emiteat.NexUI.Diagnostics",
+        "emiteat.NexUI.Time",
+        "emiteat.NexUI.Accessibility",
         "UniTask"
     ],
     "includePlatforms": [],
@@ -14,13 +20,13 @@
     "precompiledReferences": [],
     "autoReferenced": true,
     "defineConstraints": [
-        "NEXUI_HAS_DOTWEEN"
+        "DOTWEEN"
     ],
     "versionDefines": [
         {
             "name": "com.demigiant.dotween",
             "expression": "",
-            "define": "NEXUI_HAS_DOTWEEN"
+            "define": "DOTWEEN"
         }
     ],
     "noEngineReferences": false

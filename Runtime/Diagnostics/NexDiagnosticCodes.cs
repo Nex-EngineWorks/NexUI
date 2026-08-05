@@ -48,6 +48,10 @@ namespace emiteat.NexUI.Diagnostics
         public const string ProgramSchemaMismatch = "NEX-RT-6003";
         public const string InteractionPortMissing = "NEX-RT-6004";
 
+        // ---- ACC: accessibility ---------------------------------------------
+        public const string InteractiveNodeHasNoAccessibleName = "NEX-ACC-7001";
+        public const string ImageRoleWithoutLabel = "NEX-ACC-7002";
+
         // ---- BLD: build / publish -------------------------------------------
         public const string PublishFailed = "NEX-BLD-8001";
         public const string PublishPathInvalid = "NEX-BLD-8002";
@@ -105,6 +109,17 @@ namespace emiteat.NexUI.Diagnostics
             new Entry(DuplicateAutomationId, NexSeverity.Error,
                 "Two elements on the same screen share an automation id.",
                 "Rename one of them. A test that looks the id up would silently get whichever element compiled first."),
+
+            new Entry(InteractiveNodeHasNoAccessibleName, NexSeverity.Warning,
+                "An interactive node announces nothing to assistive technology.",
+                "Give the element an accessibility label, or visible text. An icon-only button is "
+                + "unreachable by a screen reader without one, and the EU Accessibility Act treats "
+                + "that as a defect for products sold in the EU."),
+
+            new Entry(ImageRoleWithoutLabel, NexSeverity.Suggestion,
+                "An element marked as a meaningful image has no accessibility label.",
+                "Describe what the image conveys, or set its role to None so it is announced as "
+                + "decoration and skipped rather than read out as an unnamed image."),
 
             new Entry(CompileFailed, NexSeverity.Error,
                 "Screen compilation failed.",

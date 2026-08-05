@@ -101,9 +101,13 @@ namespace emiteat.NexUI.Integrations.UGUI
                 WireText(runtime, node, rect, options, authoringPath, i, overrides);
                 WireCommand(runtime, program, node, rect, options, authoringPath);
                 WireInteractionTriggers(runtime, interactions, i, rect);
+                WireAccessibility(node, rect);
 
                 rect.gameObject.SetActive(node.Visible);
             }
+
+            // After the loop: chaining navigation needs every selectable to exist first.
+            NexAccessibility.ApplyExplicitNavigation(root);
 
             // Only screens that actually park a rule mid-sequence get a per-frame pump.
             if (!interactions.IsEmpty && program.Interactions.HasDelays())
@@ -114,6 +118,25 @@ namespace emiteat.NexUI.Integrations.UGUI
             runtime.RaiseShow();
 
             return runtime;
+        }
+
+        /// <summary>
+        /// Carries the node's semantics onto the built object.
+        /// </summary>
+        /// <remarks>
+        /// Only for nodes that have something to say. A grouping panel with no role and no label
+        /// would add a component to every container on the screen to record that there is nothing
+        /// to record - cost with no consumer, which is exactly what the pay-for-what-you-use rule
+        /// is about.
+        /// </remarks>
+        private static void WireAccessibility(in NexNodeProgram node, RectTransform rect)
+        {
+            if (node.Role == Accessibility.AccessibilityRole.None
+                && string.IsNullOrEmpty(node.AccessibilityLabel)
+                && !node.IsFocusable)
+                return;
+
+            rect.gameObject.AddComponent<NexAccessibleNode>().Apply(node);
         }
 
         // ---- construction ---------------------------------------------------

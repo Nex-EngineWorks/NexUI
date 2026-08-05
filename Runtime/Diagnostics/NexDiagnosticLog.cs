@@ -21,6 +21,20 @@ namespace emiteat.NexUI.Diagnostics
 
         public string Subsystem => NexDiagnosticCodes.SubsystemOf(Diagnostic.Code);
 
+        /// <summary>
+        /// The feature this came out of, falling back to the code's subsystem.
+        /// </summary>
+        /// <remarks>
+        /// The fallback keeps grouping useful while call sites are still being given scopes: an
+        /// unattributed diagnostic lands under "CMP" rather than in an unlabelled pile.
+        /// </remarks>
+        public string Feature => string.IsNullOrEmpty(Diagnostic.Context.Feature)
+            ? Subsystem
+            : Diagnostic.Context.Feature;
+
+        /// <summary>"Origin -> Handler" for this diagnostic, or empty.</summary>
+        public string Route => Diagnostic.Context.Route();
+
         internal NexDiagnosticEntry(NexDiagnostic diagnostic, DateTime now)
         {
             Diagnostic = diagnostic;
@@ -38,6 +52,9 @@ namespace emiteat.NexUI.Diagnostics
 
         /// <summary>Subsystem segment, e.g. <c>BND</c>. Empty matches all.</summary>
         public string Subsystem;
+
+        /// <summary>Feature name, e.g. <c>uGUI Save</c>. Empty matches all.</summary>
+        public string Feature;
 
         /// <summary>Screen id. Empty matches all.</summary>
         public string ScreenId;
@@ -57,14 +74,20 @@ namespace emiteat.NexUI.Diagnostics
             if (!string.IsNullOrEmpty(Subsystem) &&
                 !string.Equals(entry.Subsystem, Subsystem, StringComparison.OrdinalIgnoreCase)) return false;
 
+            if (!string.IsNullOrEmpty(Feature) &&
+                !string.Equals(entry.Feature, Feature, StringComparison.Ordinal)) return false;
+
             if (!string.IsNullOrEmpty(ScreenId) &&
                 !string.Equals(entry.Diagnostic.Location.ScreenId, ScreenId, StringComparison.Ordinal)) return false;
 
             if (string.IsNullOrEmpty(Text)) return true;
 
+            // The route is searchable too: "which errors came out of the prefab writer" is a
+            // question people ask by typing the writer's name, not by picking a feature.
             return Contains(entry.Diagnostic.Code, Text)
                    || Contains(entry.Diagnostic.Message, Text)
-                   || Contains(entry.Diagnostic.Location.ToString(), Text);
+                   || Contains(entry.Diagnostic.Location.ToString(), Text)
+                   || Contains(entry.Route, Text);
         }
 
         private static bool Contains(string haystack, string needle)
@@ -181,6 +204,34 @@ namespace emiteat.NexUI.Diagnostics
             return seen;
         }
 
+        /// <summary>Features that appear in the log, for a filter dropdown.</summary>
+        public IEnumerable<string> Features()
+        {
+            var seen = new List<string>();
+            foreach (var entry in All())
+            {
+                var feature = entry.Feature;
+                if (!string.IsNullOrEmpty(feature) && !seen.Contains(feature)) seen.Add(feature);
+            }
+            seen.Sort(StringComparer.Ordinal);
+            return seen;
+        }
+
+        /// <summary>Unresolved count per feature, for the console's group headers.</summary>
+        public Dictionary<string, int> CountsByFeature(NexSeverity minimum = NexSeverity.Warning)
+        {
+            var counts = new Dictionary<string, int>(StringComparer.Ordinal);
+            foreach (var entry in All())
+            {
+                if (entry.Resolved || entry.Diagnostic.Severity < minimum) continue;
+                var feature = entry.Feature;
+                if (string.IsNullOrEmpty(feature)) feature = "Uncategorized";
+                counts.TryGetValue(feature, out var count);
+                counts[feature] = count + 1;
+            }
+            return counts;
+        }
+
         public int CountAtLeast(NexSeverity severity)
         {
             var count = 0;
@@ -228,6 +279,10 @@ namespace emiteat.NexUI.Diagnostics
                 sb.Append("\"code\": ").Append(Json(d.Code));
                 sb.Append(", \"severity\": ").Append(Json(d.Severity.ToString()));
                 sb.Append(", \"subsystem\": ").Append(Json(entry.Subsystem));
+                sb.Append(", \"feature\": ").Append(Json(entry.Feature));
+                sb.Append(", \"origin\": ").Append(Json(d.Context.Origin));
+                sb.Append(", \"handler\": ").Append(Json(d.Context.Handler));
+                sb.Append(", \"operationId\": ").Append(Json(d.Context.OperationId));
                 sb.Append(", \"message\": ").Append(Json(d.Message));
                 sb.Append(", \"screen\": ").Append(Json(d.Location.ScreenId));
                 sb.Append(", \"node\": ").Append(Json(d.Location.NodeId));

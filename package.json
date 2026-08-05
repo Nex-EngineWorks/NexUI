@@ -3,9 +3,8 @@
   "displayName": "NexUI",
   "version": "0.1.0",
   "license": "MIT",
-  "unity": "6000.4",
-  "unityRelease": "2f1",
-  "description": "Backend-independent runtime UI framework for Unity. Provides Screen, Layer, State, Binding, Command, Motion, Theme, Query, Debug, Settings, Validation, and optional backend integrations.",
+  "unity": "2022.3",
+  "description": "Backend-independent runtime UI framework for Unity. Provides Screen, Layer, State, Binding, Command, Motion, Theme, Query, Debug, Settings, Validation, and optional backend integrations.\n\nREQUIRED BEFORE IMPORT: UniTask 2.5.10 or newer (com.cysharp.unitask). NexUI's core assembly references it directly and will not compile without it. UniTask is not on the Unity registry - install it from https://github.com/Cysharp/UniTask via Package Manager > Add package from git URL, or through OpenUPM.",
   "documentationUrl": "https://github.com/swallow-smoke/NexUI/tree/master/Documentation~",
   "changelogUrl": "https://github.com/swallow-smoke/NexUI/blob/master/CHANGELOG.md",
   "licensesUrl": "https://github.com/swallow-smoke/NexUI/blob/master/LICENSE.md",
@@ -27,7 +26,7 @@
     "url": "https://github.com/OffByJun"
   },
   "dependencies": {
-    "com.unity.ugui": "2.0.0"
+    "com.unity.ugui": "1.0.0"
   },
   "samples": [
     {

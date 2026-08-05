@@ -38,6 +38,16 @@ namespace emiteat.NexUI.Diagnostics
         /// <summary>The diagnostic underneath this one, or null when this is the root cause.</summary>
         public NexDiagnostic Cause { get; }
 
+        /// <summary>
+        /// Which feature raised it, and along which sender/receiver route.
+        /// </summary>
+        /// <remarks>
+        /// Stamped by <see cref="NexDiagnosticBag"/> from the enclosing scope rather than passed at
+        /// every call site, so a pass reports problems without also having to know which user
+        /// action it is part of.
+        /// </remarks>
+        public NexDiagnosticContext Context { get; }
+
         public NexDiagnostic(
             string code,
             NexSeverity severity,
@@ -45,7 +55,8 @@ namespace emiteat.NexUI.Diagnostics
             NexSourceLocation location = default,
             string detail = null,
             string resolution = null,
-            NexDiagnostic cause = null)
+            NexDiagnostic cause = null,
+            NexDiagnosticContext context = default)
         {
             if (string.IsNullOrEmpty(code)) throw new ArgumentException("Diagnostic code is required.", nameof(code));
 
@@ -56,7 +67,14 @@ namespace emiteat.NexUI.Diagnostics
             Detail = detail ?? string.Empty;
             Resolution = resolution ?? string.Empty;
             Cause = cause;
+            Context = context;
         }
+
+        /// <summary>A copy carrying <paramref name="context"/>. Used when a bag stamps its scope on.</summary>
+        public NexDiagnostic WithContext(NexDiagnosticContext context)
+            => context.Equals(Context)
+                ? this
+                : new NexDiagnostic(Code, Severity, Message, Location, Detail, Resolution, Cause, context);
 
         /// <summary>Wraps this diagnostic as the cause of a higher-level one.</summary>
         public NexDiagnostic AsCauseOf(string code, NexSeverity severity, string message,
@@ -82,6 +100,12 @@ namespace emiteat.NexUI.Diagnostics
         {
             var sb = new StringBuilder();
             sb.Append(Severity).Append(' ').Append(Code).Append(": ").Append(Message);
+            if (!string.IsNullOrEmpty(Context.Feature)) sb.Append("\n  in ").Append(Context.Feature);
+
+            // The route goes on its own line rather than beside the feature: on a failed save the
+            // chain runs three or four hops deep, and folding it into the header hides the end of it.
+            var route = Context.Route();
+            if (!string.IsNullOrEmpty(route)) sb.Append("\n  raised by ").Append(route);
             if (!Location.IsNone) sb.Append("\n  at ").Append(Location);
             if (!string.IsNullOrEmpty(Detail)) sb.Append("\n  ").Append(Detail);
 

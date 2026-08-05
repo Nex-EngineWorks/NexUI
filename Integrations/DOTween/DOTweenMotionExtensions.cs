@@ -1,4 +1,4 @@
-#if NEXUI_HAS_DOTWEEN
+#if DOTWEEN
 using DG.Tweening;
 using emiteat.NexUI.Abstractions;
 

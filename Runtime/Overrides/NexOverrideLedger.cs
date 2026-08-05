@@ -8,7 +8,16 @@ namespace emiteat.NexUI.Overrides
     public enum NexOverrideProperty
     {
         Text = 0,
-        Visible = 1
+        Visible = 1,
+
+        // Everything below is what an animation system moves. NexUI's own motion is not the only
+        // thing that writes these - a project's existing DOTween or Animator code does too - and
+        // the ledger is only useful for "why is this here?" if those show up in it as well.
+        Opacity = 2,
+        Position = 3,
+        Scale = 4,
+        Rotation = 5,
+        Color = 6
     }
 
     /// <summary>Who changed a value.</summary>
@@ -28,7 +37,17 @@ namespace emiteat.NexUI.Overrides
         Interaction = 2,
 
         /// <summary>Game code set it directly.</summary>
-        GameCode = 3
+        GameCode = 3,
+
+        /// <summary>
+        /// An animation system NexUI does not own - DOTween, an Animator, a hand-written coroutine.
+        /// </summary>
+        /// <remarks>
+        /// Distinct from <see cref="GameCode"/> because the follow-up question differs. Game code
+        /// that sets a value once is found by searching for the call; a tween that keeps writing it
+        /// every frame is not, and the useful answer is which tween, not which line.
+        /// </remarks>
+        External = 4
     }
 
     /// <summary>One recorded change to a node property.</summary>

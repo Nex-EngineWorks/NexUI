@@ -1,4 +1,4 @@
-#if NEXUI_HAS_DOTWEEN
+#if DOTWEEN
 using emiteat.NexUI.Core;
 using emiteat.NexUI.Motion;
 

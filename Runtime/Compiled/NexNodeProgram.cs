@@ -107,8 +107,43 @@ namespace emiteat.NexUI.Compiled
         /// </remarks>
         public Accessibility.AccessibilityRole Role;
 
+        /// <summary>
+        /// What assistive technology should announce for this node, when that differs from
+        /// <see cref="Text"/>. Empty means the visible text is the announcement.
+        /// </summary>
+        /// <remarks>
+        /// Kept separate rather than overwriting <see cref="Text"/> because the two answer
+        /// different questions. An icon-only close button draws "X" and has to announce "Close";
+        /// a label already announces itself and duplicating it into a second field is one more
+        /// thing to leave stale in translation.
+        /// </remarks>
+        public string AccessibilityLabel;
+
+        /// <summary>
+        /// Position of this node in the screen's focus and reading order, or -1 when it takes
+        /// neither focus nor a place in the announcement order.
+        /// </summary>
+        /// <remarks>
+        /// An ordinal rather than the authored up/down/left/right links. Those describe a spatial
+        /// graph for gamepad navigation, which is a different question from "what comes next" -
+        /// the sequence a screen reader reads and a Tab press follows. The compiler derives this
+        /// from document order, so the reading order matches the hierarchy the author sees.
+        /// </remarks>
+        public int FocusOrder;
+
         public bool HasText => Kind == NexNodeKind.Label || Kind == NexNodeKind.Button;
 
         public bool IsClickable => Kind == NexNodeKind.Button;
+
+        /// <summary>Whether this node takes focus and appears in the reading order.</summary>
+        public bool IsFocusable => FocusOrder >= 0;
+
+        /// <summary>
+        /// What assistive technology announces: the explicit label when set, otherwise the text.
+        /// </summary>
+        public string AccessibleName =>
+            !string.IsNullOrEmpty(AccessibilityLabel) ? AccessibilityLabel
+            : HasText ? Text
+            : string.Empty;
     }
 }
