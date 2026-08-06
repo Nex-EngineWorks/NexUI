@@ -8,7 +8,7 @@ NexUI는 UI가 *무엇을 하는지*(화면, 상태, 바인딩, 커맨드, 모�
 
 - **패키지:** `com.nexengineworks.nexui`
 - **버전:** 0.1.0
-- **Unity:** 6000.4+
+- **Unity:** 2022.3 LTS+
 - **루트 네임스페이스:** `emiteat.NexUI`
 
 ## 문서

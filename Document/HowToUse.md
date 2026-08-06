@@ -3,17 +3,17 @@
 자주 쓰는 작업을 레시피 형태로 정리합니다. 처음이라면 먼저 [GettingStart](GettingStart.md)를 보세요.
 모든 비동기 API는 `UniTask`입니다.
 
-> 네임스페이스 주의: `emiteat.NexUI.*` 내부 코드에서는 파사드를 `Core.NexUI.X`로 호출합니다.
-> 외부 게임 코드(예: `MyGame`)에서는 `using emiteat.NexUI.Core;` 후 `NexUI.X`로 바로 씁니다.
+> 네임스페이스 주의: `emiteat.NexUI.*` 내부 코드에서는 파사드를 `Core.NexUIApp.X`로 호출합니다.
+> 외부 게임 코드(예: `MyGame`)에서는 `using emiteat.NexUI.Core;` 후 `NexUIApp.X`로 바로 씁니다.
 
 ## 화면 열기 / 닫기 / 뒤로
 
 ```csharp
-await NexUI.OpenAsync("Inventory");
-await NexUI.CloseAsync("Inventory");
-await NexUI.ToggleAsync("Inventory");
-await NexUI.BackAsync();          // 백 스택 pop, 없으면 최상위 모달 닫기
-bool open = NexUI.IsOpen("Inventory");
+await NexUIApp.OpenAsync("Inventory");
+await NexUIApp.CloseAsync("Inventory");
+await NexUIApp.ToggleAsync("Inventory");
+await NexUIApp.BackAsync();          // 백 스택 pop, 없으면 최상위 모달 닫기
+bool open = NexUIApp.IsOpen("Inventory");
 ```
 
 - `openPolicy`로 동작을 제어: `Single`(중복 방지), `StackPush`(백 스택), `ReplaceLayer`(같은
@@ -35,7 +35,7 @@ bool open = NexUI.IsOpen("Inventory");
 var store = new UIStateStore();
 store.Set("score.current", 0);
 
-var surface = NexUI.Manager.GetSurface("HUD");
+var surface = NexUIApp.Manager.GetSurface("HUD");
 new UITextBinder(v => $"Score: {v}").Bind(surface.FindRequired("scoreLabel"), "score.current", store);
 
 store.Set("score.current", 1200);   // 라벨 자동 갱신
@@ -47,8 +47,9 @@ store.Set("score.current", 1200);   // 라벨 자동 갱신
 ## 버튼 액션 연결
 
 ```csharp
-UIActionResolver.Instance.Register("inventory.close", () => NexUI.Close("Inventory"));
-new UICommandBinder(UIActionResolver.Instance)
+var actions = new UIActionResolver();
+actions.Register("inventory.close", () => NexUIApp.Close("Inventory"));
+new UICommandBinder(actions)
     .Bind(surface.FindRequired("closeButton"), "inventory.close", store);
 ```
 
@@ -117,7 +118,7 @@ manager.RegisterInputSystem(inputActions, gameplayMap: "Gameplay", uiMap: "UI");
 ## 디버그 오버레이
 
 ```csharp
-NexUIDebug.Configure(NexUI.Manager, store, UIActionResolver.Instance, commandLog, queryCache);
+NexUIDebug.Configure(NexUIApp.Manager, store, actions, commandLog, queryCache);
 NexUIDebug.ToggleOverlay();   // 기본 F9
 ```
 

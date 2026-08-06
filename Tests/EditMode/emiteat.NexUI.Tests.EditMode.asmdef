@@ -12,7 +12,12 @@
         "emiteat.NexUI.Components",
         "emiteat.NexUI.Query",
         "emiteat.NexUI.Settings",
+        "emiteat.NexUI.Vector",
+        "emiteat.NexUI.Compiled",
+        "emiteat.NexUI.Integrations.UGUI",
         "emiteat.NexUI.Debug",
+        "Unity.TextMeshPro",
+        "UnityEngine.UI",
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner",
         "UniTask"

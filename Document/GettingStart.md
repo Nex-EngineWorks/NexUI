@@ -31,17 +31,17 @@
 using Cysharp.Threading.Tasks;
 using emiteat.NexUI.Core;
 
-NexUI.RegisterScreen(hudDefinition);
-NexUI.RegisterScreen(pauseDefinition);
+NexUIApp.RegisterScreen(hudDefinition);
+NexUIApp.RegisterScreen(pauseDefinition);
 
-await NexUI.OpenAsync("HUD");
-await NexUI.ToggleAsync("Inventory");
-NexUI.Open("PauseMenu");   // fire-and-forget
-await NexUI.BackAsync();    // 백 스택 pop / 최상위 모달 닫기
+await NexUIApp.OpenAsync("HUD");
+await NexUIApp.ToggleAsync("Inventory");
+NexUIApp.Open("PauseMenu");   // fire-and-forget
+await NexUIApp.BackAsync();    // 백 스택 pop / 최상위 모달 닫기
 ```
 
-> `emiteat.NexUI.*` 네임스페이스 트리 내부에서는 파사드를 `Core.NexUI.X`로 호출하세요
-> (맨 `NexUI`는 네임스페이스로 해석됨). 외부 게임 코드는 `NexUI.X`를 바로 쓸 수 있습니다.
+> `emiteat.NexUI.*` 네임스페이스 트리 내부에서는 파사드를 `Core.NexUIApp.X`로 호출하세요.
+> 외부 게임 코드는 `using emiteat.NexUI.Core;` 후 `NexUIApp.X`를 바로 쓸 수 있습니다.
 
 ## 4. 상태와 바인딩
 
@@ -52,7 +52,7 @@ var store = new UIStateStore();
 store.Set("player.hp", 1f);
 store.Set("player.name", "Hero");
 
-var surface = NexUI.Manager.GetSurface("HUD");
+var surface = NexUIApp.Manager.GetSurface("HUD");
 var nameEl = surface.TryFind("nameLabel");     // 없으면 null
 if (nameEl != null) new UITextBinder().Bind(nameEl, "player.name", store);
 new UIValueBinder().Bind(surface.FindRequired("hpBar"), "player.hp", store);

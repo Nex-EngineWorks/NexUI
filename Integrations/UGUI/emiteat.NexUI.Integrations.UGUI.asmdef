@@ -18,7 +18,8 @@
         "emiteat.NexUI.Components",
         "Unity.TextMeshPro",
         "UnityEngine.UI",
-        "UniTask"
+        "UniTask",
+        "emiteat.NexUI.Vector"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

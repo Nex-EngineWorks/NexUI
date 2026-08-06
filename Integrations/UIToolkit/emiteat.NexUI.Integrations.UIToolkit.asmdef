@@ -8,6 +8,7 @@
         "emiteat.NexUI.Motion",
         "emiteat.NexUI.Theme",
         "emiteat.NexUI.Components",
+        "emiteat.NexUI.Vector",
         "UniTask"
     ],
     "includePlatforms": [],

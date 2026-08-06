@@ -1,0 +1,25 @@
+{
+    "name": "emiteat.NexUI.Vector",
+    "rootNamespace": "emiteat.NexUI.Vector",
+    "references": [],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [
+        {
+            "name": "com.unity.modules.vectorgraphics",
+            "expression": "",
+            "define": "NEXUI_VECTOR_GRAPHICS"
+        },
+        {
+            "name": "com.unity.vectorgraphics",
+            "expression": "",
+            "define": "NEXUI_VECTOR_GRAPHICS"
+        }
+    ],
+    "noEngineReferences": false
+}

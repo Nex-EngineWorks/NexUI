@@ -9,8 +9,8 @@
 5. Register and open it:
 
 ```csharp
-NexUI.RegisterScreen(screenDefinition);
-await NexUI.OpenAsync("HUD");
+NexUIApp.RegisterScreen(screenDefinition);
+await NexUIApp.OpenAsync("HUD");
 ```
 
 Designer command and state keys are identifiers. Register the matching handlers and state in

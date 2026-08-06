@@ -310,8 +310,17 @@ namespace emiteat.NexUI.Diagnostics
         /// Groups identical reports. Location is part of the key: the same rule failing on two
         /// different elements is two problems, and collapsing them would hide one of them.
         /// </summary>
+        /// <summary>
+        /// What makes two reports the same problem.
+        /// </summary>
+        /// <remarks>
+        /// Built from the location's fields rather than its rendered form. The rendered form drops
+        /// the node id whenever a node path is present, so two elements sharing a path collapsed
+        /// into one entry and the second one vanished - along with its severity, which is how an
+        /// error could be hidden behind an earlier warning.
+        /// </remarks>
         private static string KeyOf(NexDiagnostic diagnostic)
-            => diagnostic.Code + "|" + diagnostic.Location + "|" + diagnostic.Message;
+            => diagnostic.Code + "|" + diagnostic.Location.ToIdentity() + "|" + diagnostic.Message;
 
         private static string Json(string value)
         {

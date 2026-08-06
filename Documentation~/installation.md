@@ -7,9 +7,9 @@ imports NexUI while `UniTask` is unresolved.
 
 1. Install UniTask 2.5.10 or newer from
    `https://github.com/Cysharp/UniTask.git?path=src/UniTask`.
-2. Install NexUI Runtime from `https://github.com/OffByJun/NexUI.git`.
+2. Install NexUI Runtime from `https://github.com/Nex-EngineWorks/NexUI.git`.
 3. Optional: install NexUI Studio from
-   `https://github.com/OffByJun/NexUI-Designer.git`.
+   `https://github.com/Nex-EngineWorks/NexUI-Studio.git`.
 4. Open `Tools > NexUI > Utilities > Setup Doctor` and resolve every error.
 
 For a local checkout, add the package roots with Package Manager's **Add package from disk**

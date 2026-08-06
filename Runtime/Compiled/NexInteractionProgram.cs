@@ -4,11 +4,70 @@ using System.Collections.Generic;
 namespace emiteat.NexUI.Compiled
 {
     /// <summary>What raised an interaction. Mirrors the authoring trigger set one-for-one.</summary>
+    /// <summary>
+    /// What raises an interaction rule.
+    /// </summary>
+    /// <remarks>
+    /// Appended, never renumbered: the value is what a compiled program serializes, so reordering
+    /// would silently repoint every authored rule in every project.
+    ///
+    /// <see cref="OnShow"/> and <see cref="OnHide"/> are screen lifecycle; everything else needs a
+    /// listener on the node, and only the nodes whose triggers are actually authored get one.
+    /// </remarks>
     public enum NexTrigger
     {
         OnClick = 0,
         OnShow = 1,
-        OnHide = 2
+        OnHide = 2,
+
+        OnPointerEnter = 3,
+        OnPointerExit = 4,
+        OnPointerDown = 5,
+        OnPointerUp = 6,
+
+        /// <summary>The submit action of the active input device - Enter, gamepad South, and so on.</summary>
+        /// <remarks>
+        /// Distinct from <see cref="OnClick"/> on purpose. A pointer click and a submit are the
+        /// same intent from different devices, but only submit reaches an element that was focused
+        /// by keyboard or gamepad - which is what makes a screen operable without a mouse.
+        /// </remarks>
+        OnSubmit = 7,
+        OnCancel = 8,
+
+        OnLongPress = 9,
+        OnDoubleClick = 10,
+
+        /// <summary>Raised on the element being dragged, when the drag starts.</summary>
+        OnDragBegin = 11,
+
+        /// <summary>Raised on the element being dragged, every frame the pointer moves.</summary>
+        OnDrag = 12,
+
+        /// <summary>Raised on the element being dragged, when the pointer is released.</summary>
+        OnDragEnd = 13,
+
+        /// <summary>
+        /// Raised on the element the drag was released <em>over</em> - the receiver, not the thing
+        /// dragged.
+        /// </summary>
+        /// <remarks>
+        /// The only trigger whose subject is a different element from the one that started the
+        /// gesture, which is why the drag source is published to state: a drop rule almost always
+        /// needs to know what it caught before it can decide whether to accept it.
+        /// </remarks>
+        OnDrop = 14,
+
+        /// <summary>
+        /// Raised on an overlay when something asked it to close - a backdrop click, a dismiss
+        /// button, a toast running out of time.
+        /// </summary>
+        /// <remarks>
+        /// A request, not the closing itself. The overlay does not close on its own, so a rule can
+        /// intercept this to confirm first, save a draft, or refuse. When nothing listens the
+        /// backend closes it anyway - an overlay that ignored every close request would lock the
+        /// screen, which is worse than any policy an author might have wanted.
+        /// </remarks>
+        OnCloseRequested = 15
     }
 
     /// <summary>Where in the propagation path a rule listens.</summary>

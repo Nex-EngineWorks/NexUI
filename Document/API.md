@@ -37,7 +37,7 @@
 
 - `UIManager` — `OpenAsync/CloseAsync/ToggleAsync/BackAsync`, `IsOpen`, `GetSurface`,
   `Register…`, `MotionPlayer/MotionResolver`, `ScreenOpened/ScreenClosed` 이벤트, 디버그 조회 표면.
-- `NexUI` — 공유 `UIManager`에 대한 정적 파사드 (트리 내부에서는 `Core.NexUI`).
+- `NexUIApp` — 공유 `UIManager`에 대한 정적 파사드 (트리 내부에서는 `Core.NexUIApp`).
 - `UIScreenDefinition` + 설정 구조체들, `IUIScreenFactory`, `UIScreenInstance`, `UIScreenRegistry`.
 - 레이어링: `UILayerType`, `UIOpenPolicy`, `IUILayerRoot`, `UILayerManager`.
 - 내비게이션: `UIBackStack`, `UIModalStack`, `UIToastQueue`, `UIFocusManager`, `UIPolicyRunner`.

@@ -2,7 +2,7 @@
 
 ## 요구사항
 
-- Unity **6000.4+**.
+- Unity **2022.3 LTS or newer**.
 - **UniTask** (`com.cysharp.unitask`) — 필수. 모든 비동기 API가 사용합니다.
 - uGUI 통합용: `com.unity.ugui` + TextMeshPro (Unity 기본 포함).
 
@@ -30,7 +30,7 @@ UniTask 저장소의 `src/UniTask/Assets/Plugins/UniTask` 폴더를 프로젝트
 
 ## 2. NexUI 추가
 
-`com.emiteat.nexui` 패키지를 프로젝트의 `Packages/` 폴더에 두거나(임베디드), Package Manager의
+`com.nexengineworks.nexui` 패키지를 프로젝트의 `Packages/` 폴더에 두거나(임베디드), Package Manager의
 `+ ▸ Add package from disk…`로 해당 `package.json`을 선택합니다.
 
 UniTask가 resolve되면 NexUI 어셈블리가 컴파일됩니다.
@@ -58,4 +58,4 @@ Package Manager에서 NexUI를 선택하고 Samples 탭에서 **Basic Runtime** 
 ## 확인
 
 컴파일 후 씬에 백엔드 부트스트랩을 추가하고([GettingStart](GettingStart.md) 참조)
-`NexUI.OpenAsync("HUD")`를 호출합니다. 콘솔 에러가 없으면 준비 완료입니다.
+`NexUIApp.OpenAsync("HUD")`를 호출합니다. 콘솔 에러가 없으면 준비 완료입니다.

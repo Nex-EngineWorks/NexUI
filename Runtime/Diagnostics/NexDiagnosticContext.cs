@@ -143,5 +143,6 @@ namespace emiteat.NexUI.Diagnostics
         public const string Motion = "Motion";
         public const string Scenario = "Scenario";
         public const string Components = "Components";
+        public const string Binding = "Binding";
     }
 }

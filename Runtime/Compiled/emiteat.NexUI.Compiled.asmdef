@@ -3,7 +3,9 @@
     "rootNamespace": "emiteat.NexUI.Compiled",
     "references": [
         "emiteat.NexUI.Diagnostics",
-        "emiteat.NexUI.Accessibility"
+        "emiteat.NexUI.Accessibility",
+        "emiteat.NexUI.State",
+        "emiteat.NexUI.Vector"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

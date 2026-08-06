@@ -135,7 +135,27 @@ namespace emiteat.NexUI.Compiled
                   .Append('|').Append(n.CommandId)
                   .Append('|').Append(n.AutomationId)
                   .Append('|').Append(n.Role)
-                  .Append('\n');
+
+                  // Everything below has to be here for the same reason the fields above are: the
+                  // publisher skips writing when the hash is unchanged, so a field the hash omits
+                  // is a field the author can edit without the change ever reaching the asset.
+                  .Append('|').Append(n.ValueBindingKey)
+                  .Append('|').Append(n.VisibilityBindingKey)
+                  .Append('|').Append(n.InteractableBindingKey)
+                  .Append('|').Append(n.ClassBindingKey)
+                  .Append('|').Append(n.TextBindingMode)
+                  .Append('|').Append(n.ValueBindingMode)
+                  .Append('|').Append(n.TextConverterKey)
+                  .Append('|').Append(n.ValueConverterKey)
+                  .Append('|').Append(n.AccessibilityLabel)
+                  .Append('|').Append(n.FocusOrder)
+                  .Append('|').Append((int)n.Capabilities)
+                  .Append('|').Append(n.ControlId)
+                  .Append('|').Append(Fixed(n.ValueMin)).Append(',').Append(Fixed(n.ValueMax));
+
+                AppendProperties(sb, n.ControlProperties);
+                AppendShape(sb, n.Shape);
+                sb.Append('\n');
             }
 
             for (int i = 0; i < _features.Requirements.Count; i++)
@@ -184,6 +204,78 @@ namespace emiteat.NexUI.Compiled
         /// same screen hashes differently on a machine with a comma decimal separator, or after a
         /// round-trip that costs a bit of mantissa - and the cache starts missing for no reason.
         /// </summary>
+        /// <summary>
+        /// Appends authored control properties in the order the compiler emitted them.
+        /// </summary>
+        /// <remarks>
+        /// Not sorted here. The compiler walks the schema, which is a fixed list, so the order is
+        /// already deterministic for a given Studio version - and sorting would hide a compiler
+        /// that started emitting them in a data-dependent order, which is exactly the kind of
+        /// non-determinism the hash exists to catch.
+        /// </remarks>
+        private static void AppendProperties(StringBuilder sb, NexNodeProperty[] properties)
+        {
+            if (properties == null || properties.Length == 0) return;
+
+            for (int i = 0; i < properties.Length; i++)
+            {
+                var property = properties[i];
+                sb.Append("|p:").Append(property.Key).Append('=');
+
+                switch (property.Kind)
+                {
+                    case NexPropertyKind.Flag: sb.Append(property.Flag ? 1 : 0); break;
+                    case NexPropertyKind.Text: sb.Append(property.Text); break;
+                    case NexPropertyKind.Color: sb.Append(ColorText(property.Color)); break;
+                    case NexPropertyKind.Vector:
+                        sb.Append(Fixed(property.Vector.x)).Append(',').Append(Fixed(property.Vector.y));
+                        break;
+                    default: sb.Append(Fixed(property.Number)); break;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Appends a vector path to the canonical form.
+        /// </summary>
+        /// <remarks>
+        /// Every anchor and handle, because the publisher skips writing when the hash is unchanged
+        /// and a path is exactly the kind of thing an author edits repeatedly. Omitting it would
+        /// mean dragging a point produced no new asset - the same failure that hid binding edits
+        /// before the binding fields were added here.
+        ///
+        /// Fill and stroke are included for the same reason: recolouring a shape is an edit.
+        /// </remarks>
+        private static void AppendShape(StringBuilder sb, Vector.NexVectorShape shape)
+        {
+            if (shape == null || shape.IsEmpty) return;
+
+            sb.Append("|shape:").Append(shape.FillRule)
+              .Append(',').Append(shape.Filled ? 1 : 0)
+              .Append(',').Append(ColorText(shape.FillColor))
+              .Append(',').Append(Fixed(shape.StrokeWidth))
+              .Append(',').Append(ColorText(shape.StrokeColor))
+              .Append(',').Append(shape.Join)
+              .Append(',').Append(shape.Cap);
+
+            for (int c = 0; c < shape.Contours.Count; c++)
+            {
+                var contour = shape.Contours[c];
+                if (contour == null) continue;
+
+                sb.Append("|c:").Append(contour.Closed ? 1 : 0);
+
+                var anchors = contour.Anchors;
+                for (int a = 0; a < anchors.Count; a++)
+                {
+                    var anchor = anchors[a];
+                    sb.Append(':').Append(Fixed(anchor.Position.x)).Append(',').Append(Fixed(anchor.Position.y))
+                      .Append(';').Append(Fixed(anchor.InHandle.x)).Append(',').Append(Fixed(anchor.InHandle.y))
+                      .Append(';').Append(Fixed(anchor.OutHandle.x)).Append(',').Append(Fixed(anchor.OutHandle.y));
+                }
+            }
+        }
+
         private static string Fixed(float value)
             => value.ToString("F4", System.Globalization.CultureInfo.InvariantCulture);
 

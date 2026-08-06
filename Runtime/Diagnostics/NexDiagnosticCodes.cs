@@ -41,6 +41,9 @@ namespace emiteat.NexUI.Diagnostics
         public const string InteractionHasNoActions = "NEX-BND-4005";
         public const string InteractionActionIncomplete = "NEX-BND-4006";
         public const string InteractionPhaseUnreachable = "NEX-BND-4007";
+        public const string TwoWayBindingOnReadOnlyNode = "NEX-BND-4008";
+        public const string ValueBindingHasNoBackendTarget = "NEX-BND-4009";
+        public const string ConverterKeyWithoutBinding = "NEX-BND-4010";
 
         // ---- RT: runtime ----------------------------------------------------
         public const string NoCommandHandler = "NEX-RT-6001";
@@ -109,6 +112,22 @@ namespace emiteat.NexUI.Diagnostics
             new Entry(DuplicateAutomationId, NexSeverity.Error,
                 "Two elements on the same screen share an automation id.",
                 "Rename one of them. A test that looks the id up would silently get whichever element compiled first."),
+
+            new Entry(TwoWayBindingOnReadOnlyNode, NexSeverity.Warning,
+                "A two-way binding was authored on a node that cannot write anything back.",
+                "Set the binding to one-way, or use a control that accepts input. The binding still "
+                + "reads; only the write-back half has nowhere to come from."),
+
+            new Entry(ValueBindingHasNoBackendTarget, NexSeverity.Warning,
+                "A value binding was authored on a node the backend builds with nothing to hold a value.",
+                "The compiled node kinds are panel, image, label and button - none of them carries a "
+                + "scalar. The binding is preserved in the program and starts working once the screen "
+                + "uses a control that does."),
+
+            new Entry(ConverterKeyWithoutBinding, NexSeverity.Suggestion,
+                "A converter was named for a binding that is not set.",
+                "Remove the converter key, or set the binding it was meant for. As it stands the "
+                + "converter is never called."),
 
             new Entry(InteractiveNodeHasNoAccessibleName, NexSeverity.Warning,
                 "An interactive node announces nothing to assistive technology.",

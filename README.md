@@ -37,7 +37,11 @@ Integrations.UGUI      → all runtime modules
 
 ## Dependencies
 
-- Unity **6000.4+**. Async APIs use **UniTask** (`com.cysharp.unitask`) throughout.
+- Unity **2022.3 LTS or newer** (verified by compilation on 2022.3 and Unity 6; see
+  [compatibility](../com.nexengineworks.nexui.studio/Documentation~/reference/compatibility.md)
+  for what "verified" covers on each version).
+- Async APIs use **UniTask** (`com.cysharp.unitask`) throughout. Install it before importing
+  NexUI - the runtime assembly references it directly and will not compile without it.
 - uGUI integration references `com.unity.ugui` and `Unity.TextMeshPro`.
 
 ## Quick start

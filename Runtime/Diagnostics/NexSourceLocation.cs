@@ -50,6 +50,29 @@ namespace emiteat.NexUI.Diagnostics
         public NexSourceLocation WithMember(string member)
             => new NexSourceLocation(ScreenId, NodeId, NodePath, member);
 
+        /// <summary>
+        /// Every field, for use as an identity key.
+        /// </summary>
+        /// <remarks>
+        /// <see cref="ToString"/> is for display: it picks the most specific subject and drops the
+        /// rest, so two different elements render identically whenever they share a node path.
+        /// Using that string to decide whether two diagnostics are the same problem collapsed them
+        /// into one - which is exactly what deduplication is supposed to avoid.
+        /// </remarks>
+        public string ToIdentity()
+            => ScreenId + Separator + NodeId + Separator + NodePath + Separator + Member;
+
+        /// <summary>
+        /// Field separator for <see cref="ToIdentity"/>: the ASCII unit separator.
+        /// </summary>
+        /// <remarks>
+        /// Written as an escape rather than as a literal control character, which is
+        /// invisible in an editor and reads as a missing separator. It has to be something
+        /// no screen id, node id or path can contain, or two different locations could
+        /// produce the same key - the bug ToIdentity exists to fix.
+        /// </remarks>
+        private const char Separator = (char)0x1f;
+
         public override string ToString()
         {
             if (IsNone) return "<unknown>";

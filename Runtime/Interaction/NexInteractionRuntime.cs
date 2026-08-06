@@ -67,15 +67,28 @@ namespace emiteat.NexUI.Interaction
         /// rule: a list whose items bubble needs the <em>items</em> listening, not the list. The
         /// backend asks for this rather than working it out, so the rule lives in one place.
         /// </remarks>
-        public bool WantsClickListener(int nodeIndex)
+        public bool WantsClickListener(int nodeIndex) => WantsListener(nodeIndex, NexTrigger.OnClick);
+
+        /// <summary>
+        /// Whether this node must report <paramref name="trigger"/> to the engine.
+        /// </summary>
+        /// <remarks>
+        /// The generalisation of <see cref="WantsClickListener"/>, kept because the answer is the
+        /// same shape for every trigger: a node listens either because it owns a rule, or because
+        /// some ancestor's rule propagates and this node is where the event originates.
+        ///
+        /// Asked per trigger rather than per node so a screen that authored only a hover pays for
+        /// no press listeners - the "pay for what you use" rule applied one event at a time.
+        /// </remarks>
+        public bool WantsListener(int nodeIndex, NexTrigger trigger)
         {
             if (IsEmpty) return false;
 
-            // Any propagating rule means every clickable node has to report its clicks, because
-            // the rule that cares sits somewhere above it.
-            if (_interactions.HasPropagatingRules(NexTrigger.OnClick)) return true;
+            // Any propagating rule means every node has to report the event, because the rule that
+            // cares sits somewhere above it.
+            if (_interactions.HasPropagatingRules(trigger)) return true;
 
-            foreach (var _ in _interactions.RulesFor(nodeIndex, NexTrigger.OnClick, NexPhase.Target))
+            foreach (var _ in _interactions.RulesFor(nodeIndex, trigger, NexPhase.Target))
                 return true;
 
             return false;
@@ -90,6 +103,53 @@ namespace emiteat.NexUI.Interaction
         /// A skipped rule is recorded (at Full level) rather than dropped, because "the condition
         /// was false" is the answer to the most common interaction bug there is.
         /// </remarks>
+        /// <summary>
+        /// State key holding the element currently being dragged, readable by a drop rule.
+        /// </summary>
+        /// <remarks>
+        /// A drop is the one trigger whose subject is not the element that started the gesture, so
+        /// the rule needs a second piece of information to be useful: a slot that accepts weapons
+        /// but not potions cannot decide anything from "something was dropped on me".
+        ///
+        /// Published as ordinary state rather than as a new argument on <see cref="Fire"/> because
+        /// the authoring model already knows how to read state - a drop rule filters on this with
+        /// the same condition field every other rule uses, and needs no new concept.
+        /// </remarks>
+        public const string DragSourceKey = "nexui.drag.source";
+
+        /// <summary>Publishes the element a drag started from. Call when the drag begins.</summary>
+        public void SetDragSource(int nodeIndex)
+        {
+            if (_state == null) return;
+            _state.Set(DragSourceKey, IdentityOf(nodeIndex));
+        }
+
+        /// <summary>
+        /// Clears the drag source. Call when the drag ends.
+        /// </summary>
+        /// <remarks>
+        /// Safe to call after a drop: uGUI delivers the drop before the drag ends, so the value is
+        /// still readable while the drop rule runs and is gone before the next gesture starts.
+        /// Leaving it set would let a later, unrelated rule read a stale source as if it were live.
+        /// </remarks>
+        public void ClearDragSource() => _state?.Set(DragSourceKey, string.Empty);
+
+        /// <summary>
+        /// How a node names itself to an authored rule.
+        /// </summary>
+        /// <remarks>
+        /// The automation id first, because it is the handle an author deliberately assigned and
+        /// which survives renaming and restructuring. The authoring path is the fallback: readable,
+        /// but it changes when the screen is reorganised.
+        /// </remarks>
+        private string IdentityOf(int nodeIndex)
+        {
+            if (_program == null || nodeIndex < 0 || nodeIndex >= _program.Nodes.Length) return string.Empty;
+
+            var automationId = _program.Nodes[nodeIndex].AutomationId;
+            return !string.IsNullOrEmpty(automationId) ? automationId : PathOf(nodeIndex);
+        }
+
         public void Fire(int nodeIndex, NexTrigger trigger)
         {
             if (IsEmpty) return;
@@ -125,7 +185,20 @@ namespace emiteat.NexUI.Interaction
         }
 
         /// <summary>Whether a trigger travels through the hierarchy at all.</summary>
-        private static bool Propagates(NexTrigger trigger) => trigger == NexTrigger.OnClick;
+        /// <summary>
+        /// Whether a trigger travels through the element tree.
+        /// </summary>
+        /// <remarks>
+        /// Everything raised by a node propagates; only the screen lifecycle does not. Show and
+        /// hide already reach every node, so bubbling one would fire an ancestor's rule once per
+        /// descendant that appeared - which is nobody's intent.
+        ///
+        /// Must agree with the compiler's rule of the same name: the compiler drops a rule it
+        /// believes can never be reached, and if these two disagree the rule is either dropped
+        /// while it would have worked or kept while it never fires.
+        /// </remarks>
+        private static bool Propagates(NexTrigger trigger)
+            => trigger != NexTrigger.OnShow && trigger != NexTrigger.OnHide;
 
         /// <summary>
         /// Runs the rules a node listens with in one phase.

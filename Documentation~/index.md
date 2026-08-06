@@ -5,6 +5,8 @@ first, then optionally add NexUI Studio for visual authoring.
 
 ## Start here
 
+- [신입 개발자 온보딩 가이드 (한국어)](new-developer-onboarding-ko.md)
+- [초보자 종합 안내서 (한국어)](beginner-handbook-ko.md)
 - [Installation](installation.md)
 - [Quick start](quick-start.md)
 - [Project setup](project-setup.md)
@@ -15,6 +17,6 @@ first, then optionally add NexUI Studio for visual authoring.
 
 ## Support contract
 
-The package currently targets Unity 6000.4.2f1 and UniTask 2.5.10. A successful C# assembly
+The package supports Unity 2022.3 LTS and newer, and is developed on 6000.4.2f1. UniTask 2.5.10 or newer is required. A successful C# assembly
 build is not equivalent to a Unity Test Runner or Player build result. Validate the target
 platform and backend in Play Mode before shipping.

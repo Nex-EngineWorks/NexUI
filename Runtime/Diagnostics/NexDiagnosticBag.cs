@@ -108,7 +108,7 @@ namespace emiteat.NexUI.Diagnostics
             // The feature is part of the key. The same code at the same element genuinely is two
             // problems when one comes from an import and the other from a save, and collapsing
             // them would hide whichever happened second.
-            var key = stamped.Code + "|" + stamped.Location + "|" + stamped.Message
+            var key = stamped.Code + "|" + stamped.Location.ToIdentity() + "|" + stamped.Message
                       + "|" + stamped.Context.Feature;
             if (_occurrences.TryGetValue(key, out var count))
             {
@@ -132,7 +132,7 @@ namespace emiteat.NexUI.Diagnostics
         public int OccurrenceCount(NexDiagnostic diagnostic)
         {
             if (diagnostic == null) return 0;
-            var key = diagnostic.Code + "|" + diagnostic.Location + "|" + diagnostic.Message
+            var key = diagnostic.Code + "|" + diagnostic.Location.ToIdentity() + "|" + diagnostic.Message
                       + "|" + diagnostic.Context.Feature;
             return _occurrences.TryGetValue(key, out var count) ? count : 0;
         }
