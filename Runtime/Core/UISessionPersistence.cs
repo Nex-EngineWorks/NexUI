@@ -1,3 +1,4 @@
+using System.Threading.Tasks;
 using Cysharp.Threading.Tasks;
 
 namespace emiteat.NexUI.Core
@@ -41,10 +42,10 @@ namespace emiteat.NexUI.Core
         }
 
         /// <summary>Opens whatever screen was last recorded, if any. Call once at startup after registering screens/factories.</summary>
-        public UniTask RestoreAsync()
+        public Task RestoreAsync()
         {
             var lastScreen = _store.GetString(LastScreenKey);
-            return string.IsNullOrEmpty(lastScreen) ? UniTask.CompletedTask : _manager.OpenAsync(lastScreen);
+            return string.IsNullOrEmpty(lastScreen) ? Task.CompletedTask : _manager.OpenAsync(lastScreen);
         }
 
         private void OnScreenOpened(UIScreenInstance instance)

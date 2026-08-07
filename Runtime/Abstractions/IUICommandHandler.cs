@@ -1,3 +1,4 @@
+using System.Threading.Tasks;
 using Cysharp.Threading.Tasks;
 
 namespace emiteat.NexUI.Abstractions
@@ -6,6 +7,6 @@ namespace emiteat.NexUI.Abstractions
     public interface IUICommandHandler<TCommand>
         where TCommand : IUICommand
     {
-        UniTask HandleAsync(TCommand command, UICommandContext context);
+        Task HandleAsync(TCommand command, UICommandContext context);
     }
 }

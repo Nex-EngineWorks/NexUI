@@ -1,3 +1,4 @@
+using System.Threading.Tasks;
 using Cysharp.Threading.Tasks;
 using emiteat.NexUI.Abstractions;
 
@@ -18,12 +19,12 @@ namespace emiteat.NexUI.Core
 
         // ---- Async API ------------------------------------------------------
 
-        public static UniTask OpenAsync(string screenId, UIOpenArgs args = default) => Manager.OpenAsync(screenId, args);
-        public static UniTask CloseAsync(string screenId, UICloseArgs args = default) => Manager.CloseAsync(screenId, args);
-        public static UniTask ToggleAsync(string screenId) => Manager.ToggleAsync(screenId);
-        public static UniTask BackAsync() => Manager.BackAsync();
-        public static UniTask PreloadAsync() => Manager.PreloadAsync();
-        public static UniTask PreloadAsync(string screenId) => Manager.PreloadAsync(screenId);
+        public static Task OpenAsync(string screenId, UIOpenArgs args = default) => Manager.OpenAsync(screenId, args);
+        public static Task CloseAsync(string screenId, UICloseArgs args = default) => Manager.CloseAsync(screenId, args);
+        public static Task ToggleAsync(string screenId) => Manager.ToggleAsync(screenId);
+        public static Task BackAsync() => Manager.BackAsync();
+        public static Task PreloadAsync() => Manager.PreloadAsync();
+        public static Task PreloadAsync(string screenId) => Manager.PreloadAsync(screenId);
 
         // ---- Fire-and-forget sync API --------------------------------------
 

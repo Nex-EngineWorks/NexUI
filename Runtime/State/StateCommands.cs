@@ -1,3 +1,4 @@
+using System.Threading.Tasks;
 using Cysharp.Threading.Tasks;
 using emiteat.NexUI.Abstractions;
 
@@ -33,10 +34,10 @@ namespace emiteat.NexUI.State
 
         public SetValueCommandHandler(UIStateStore store) => _store = store;
 
-        public UniTask HandleAsync(SetValueCommand command, UICommandContext context)
+        public Task HandleAsync(SetValueCommand command, UICommandContext context)
         {
             _store.Set(command.Key, command.Value);
-            return UniTask.CompletedTask;
+            return Task.CompletedTask;
         }
     }
 }

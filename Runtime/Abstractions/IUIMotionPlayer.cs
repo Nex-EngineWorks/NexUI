@@ -1,4 +1,5 @@
 using System.Threading;
+using System.Threading.Tasks;
 using Cysharp.Threading.Tasks;
 
 namespace emiteat.NexUI.Abstractions
@@ -10,7 +11,7 @@ namespace emiteat.NexUI.Abstractions
     /// </summary>
     public interface IUIMotionPlayer
     {
-        UniTask PlayAsync(
+        Task PlayAsync(
             IUIElementHandle target,
             UIMotionTimeline timeline,
             CancellationToken ct

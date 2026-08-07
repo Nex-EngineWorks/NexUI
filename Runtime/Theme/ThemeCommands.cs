@@ -1,3 +1,4 @@
+using System.Threading.Tasks;
 using Cysharp.Threading.Tasks;
 using emiteat.NexUI.Abstractions;
 
@@ -17,10 +18,10 @@ namespace emiteat.NexUI.Theme
     /// <summary>Applies a <see cref="SetThemeCommand"/> via the theme facade.</summary>
     public sealed class SetThemeCommandHandler : IUICommandHandler<SetThemeCommand>
     {
-        public UniTask HandleAsync(SetThemeCommand command, UICommandContext context)
+        public Task HandleAsync(SetThemeCommand command, UICommandContext context)
         {
             NexUITheme.Use(command.ThemeId);
-            return UniTask.CompletedTask;
+            return Task.CompletedTask;
         }
     }
 }

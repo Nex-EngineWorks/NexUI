@@ -1,3 +1,4 @@
+using System.Threading.Tasks;
 using Cysharp.Threading.Tasks;
 
 namespace emiteat.NexUI.Abstractions
@@ -8,9 +9,9 @@ namespace emiteat.NexUI.Abstractions
     /// </summary>
     public interface IUIScreenLifecycle
     {
-        UniTask OnBeforeOpenAsync(UIScreenContext context);
-        UniTask OnAfterOpenAsync(UIScreenContext context);
-        UniTask OnBeforeCloseAsync(UIScreenContext context);
-        UniTask OnAfterCloseAsync(UIScreenContext context);
+        Task OnBeforeOpenAsync(UIScreenContext context);
+        Task OnAfterOpenAsync(UIScreenContext context);
+        Task OnBeforeCloseAsync(UIScreenContext context);
+        Task OnAfterCloseAsync(UIScreenContext context);
     }
 }

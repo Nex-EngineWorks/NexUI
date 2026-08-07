@@ -1,4 +1,5 @@
 using System.Threading;
+using System.Threading.Tasks;
 using Cysharp.Threading.Tasks;
 using emiteat.NexUI.Abstractions;
 using UnityEngine;
@@ -12,7 +13,7 @@ namespace emiteat.NexUI.Motion
     /// </summary>
     public static class SharedElementTransition
     {
-        public static UniTask PlayAsync(
+        public static Task PlayAsync(
             IUIMotionPlayer player,
             IUIElementHandle source,
             IUIElementHandle destination,
@@ -22,7 +23,7 @@ namespace emiteat.NexUI.Motion
             var src = source?.As<IUITransformCapability>();
             var dst = destination?.As<IUITransformCapability>();
             if (player == null || src == null || dst == null)
-                return UniTask.CompletedTask;
+                return Task.CompletedTask;
 
             Vector2 from = src.Position;
             Vector2 to = dst.Position;

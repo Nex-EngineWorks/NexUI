@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Threading;
+using System.Threading.Tasks;
 using Cysharp.Threading.Tasks;
 using emiteat.NexUI.Abstractions;
 using UnityEngine;
@@ -21,7 +22,7 @@ namespace emiteat.NexUI.Motion
         private readonly Dictionary<IUIElementHandle, CancellationTokenSource> _active =
             new Dictionary<IUIElementHandle, CancellationTokenSource>();
 
-        public async UniTask PlayAsync(IUIElementHandle target, UIMotionTimeline timeline, CancellationToken ct)
+        public async Task PlayAsync(IUIElementHandle target, UIMotionTimeline timeline, CancellationToken ct)
         {
             if (target == null || timeline?.Tracks == null || timeline.Tracks.Length == 0)
                 return;

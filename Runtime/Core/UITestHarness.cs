@@ -1,3 +1,4 @@
+using System.Threading.Tasks;
 using Cysharp.Threading.Tasks;
 using emiteat.NexUI.Abstractions;
 
@@ -23,13 +24,13 @@ namespace emiteat.NexUI.Core
             _dispatcher = dispatcher;
         }
 
-        public UniTask OpenAsync(string screenId, UIOpenArgs args = default) => _manager.OpenAsync(screenId, args);
-        public UniTask CloseAsync(string screenId, UICloseArgs args = default) => _manager.CloseAsync(screenId, args);
-        public UniTask ToggleAsync(string screenId) => _manager.ToggleAsync(screenId);
+        public Task OpenAsync(string screenId, UIOpenArgs args = default) => _manager.OpenAsync(screenId, args);
+        public Task CloseAsync(string screenId, UICloseArgs args = default) => _manager.CloseAsync(screenId, args);
+        public Task ToggleAsync(string screenId) => _manager.ToggleAsync(screenId);
         public bool IsOpen(string screenId) => _manager.IsOpen(screenId);
 
         /// <summary>Dispatches a command through the same middleware chain a real click would (e.g. <c>new OpenScreenCommand("Settings")</c>).</summary>
-        public UniTask InvokeAsync(IUICommand command) => _dispatcher.DispatchAsync(command);
+        public Task InvokeAsync(IUICommand command) => _dispatcher.DispatchAsync(command);
 
         /// <summary>Finds an element on an open screen by id, for assertions (reading text/value/visibility capabilities) - never a GameObject.Find or coordinate hit-test.</summary>
         public IUIElementHandle FindElement(string screenId, string elementId)

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using Cysharp.Threading.Tasks;
 using emiteat.NexUI.Abstractions;
 using UnityEngine;
@@ -13,8 +14,8 @@ namespace emiteat.NexUI.Core
     public sealed class UICommandDispatcher : IUICommandDispatcher
     {
         private readonly List<IUIMiddleware> _middlewares = new List<IUIMiddleware>();
-        private readonly Dictionary<Type, Func<IUICommand, UICommandContext, UniTask>> _handlers =
-            new Dictionary<Type, Func<IUICommand, UICommandContext, UniTask>>();
+        private readonly Dictionary<Type, Func<IUICommand, UICommandContext, Task>> _handlers =
+            new Dictionary<Type, Func<IUICommand, UICommandContext, Task>>();
 
         private readonly Func<UICommandContext> _contextFactory;
 
@@ -42,7 +43,7 @@ namespace emiteat.NexUI.Core
             _handlers[typeof(TCommand)] = (cmd, ctx) => handler.HandleAsync((TCommand)cmd, ctx);
         }
 
-        public async UniTask DispatchAsync(IUICommand command)
+        public async Task DispatchAsync(IUICommand command)
         {
             if (command == null) return;
 
@@ -69,12 +70,12 @@ namespace emiteat.NexUI.Core
         {
             private readonly IUICommand _command;
             private readonly UICommandContext _context;
-            private readonly Func<IUICommand, UICommandContext, UniTask> _handler;
+            private readonly Func<IUICommand, UICommandContext, Task> _handler;
             private readonly List<IUIMiddleware> _middlewares;
             private int _index;
 
             public DispatchState(IUICommand command, UICommandContext context,
-                Func<IUICommand, UICommandContext, UniTask> handler, List<IUIMiddleware> middlewares)
+                Func<IUICommand, UICommandContext, Task> handler, List<IUIMiddleware> middlewares)
             {
                 _command = command;
                 _context = context;
@@ -82,7 +83,7 @@ namespace emiteat.NexUI.Core
                 _middlewares = middlewares;
             }
 
-            public UniTask InvokeNext()
+            public Task InvokeNext()
             {
                 if (_index >= _middlewares.Count)
                     return _handler(_command, _context);

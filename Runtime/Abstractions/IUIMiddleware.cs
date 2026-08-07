@@ -1,4 +1,5 @@
 using System;
+using System.Threading.Tasks;
 using Cysharp.Threading.Tasks;
 
 namespace emiteat.NexUI.Abstractions
@@ -9,10 +10,10 @@ namespace emiteat.NexUI.Abstractions
     /// </summary>
     public interface IUIMiddleware
     {
-        UniTask InvokeAsync(
+        Task InvokeAsync(
             IUICommand command,
             UICommandContext context,
-            Func<UniTask> next
+            Func<Task> next
         );
     }
 }

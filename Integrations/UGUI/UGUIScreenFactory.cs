@@ -1,4 +1,5 @@
 using System.Threading;
+using System.Threading.Tasks;
 using Cysharp.Threading.Tasks;
 using emiteat.NexUI.Abstractions;
 using emiteat.NexUI.Core;
@@ -14,8 +15,7 @@ namespace emiteat.NexUI.Integrations.UGUI
     {
         public UIRenderBackend Backend => UIRenderBackend.UGUI;
 
-        public UniTask<IUISurface> CreateAsync(
-            UIScreenDefinition definition,
+        public Task<IUISurface> CreateAsync(UIScreenDefinition definition,
             IUISurface parentLayer,
             CancellationToken ct)
         {
@@ -23,7 +23,7 @@ namespace emiteat.NexUI.Integrations.UGUI
             {
                 Debug.LogError(
                     $"[NexUI] UGUIScreenFactory: screen '{definition.ScreenId}' asset is not a GameObject prefab.");
-                return UniTask.FromResult<IUISurface>(null);
+                return Task.FromResult<IUISurface>(null);
             }
 
             Transform parent = parentLayer?.NativeRoot is GameObject parentGo ? parentGo.transform : null;
@@ -41,7 +41,7 @@ namespace emiteat.NexUI.Integrations.UGUI
             }
 
             IUISurface surface = new UGUISurface(definition.ScreenId, instance);
-            return UniTask.FromResult(surface);
+            return Task.FromResult(surface);
         }
     }
 }

@@ -1,4 +1,5 @@
 using System.Threading;
+using System.Threading.Tasks;
 using Cysharp.Threading.Tasks;
 using emiteat.NexUI.Abstractions;
 using emiteat.NexUI.Core;
@@ -16,8 +17,7 @@ namespace emiteat.NexUI.Integrations.UIToolkit
     {
         public UIRenderBackend Backend => UIRenderBackend.UIToolkit;
 
-        public UniTask<IUISurface> CreateAsync(
-            UIScreenDefinition definition,
+        public Task<IUISurface> CreateAsync(UIScreenDefinition definition,
             IUISurface parentLayer,
             CancellationToken ct)
         {
@@ -25,7 +25,7 @@ namespace emiteat.NexUI.Integrations.UIToolkit
             {
                 Debug.LogError(
                     $"[NexUI] UIToolkitScreenFactory: screen '{definition.ScreenId}' asset is not a VisualTreeAsset.");
-                return UniTask.FromResult<IUISurface>(null);
+                return Task.FromResult<IUISurface>(null);
             }
 
             // Clone into a fresh container so the screen has a single root element.
@@ -44,7 +44,7 @@ namespace emiteat.NexUI.Integrations.UIToolkit
                     "The screen is detached and will not render until added to a panel.");
 
             IUISurface surface = new UIToolkitSurface(definition.ScreenId, root);
-            return UniTask.FromResult(surface);
+            return Task.FromResult(surface);
         }
 
         private static void ApplyStyleSheets(UIScreenDefinition definition, VisualElement root)

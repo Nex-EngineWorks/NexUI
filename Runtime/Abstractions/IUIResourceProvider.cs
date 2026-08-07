@@ -1,4 +1,5 @@
 using System.Threading;
+using System.Threading.Tasks;
 using Cysharp.Threading.Tasks;
 
 namespace emiteat.NexUI.Abstractions
@@ -9,7 +10,7 @@ namespace emiteat.NexUI.Abstractions
     /// </summary>
     public interface IUIResourceProvider
     {
-        UniTask<T> LoadAssetAsync<T>(string key, CancellationToken ct)
+        Task<T> LoadAssetAsync<T>(string key, CancellationToken ct)
             where T : UnityEngine.Object;
 
         void Release(string key);

@@ -1,6 +1,6 @@
 using System;
 using System.Threading;
-using Cysharp.Threading.Tasks;
+using System.Threading.Tasks;
 using emiteat.NexUI.State;
 
 namespace emiteat.NexUI.Query
@@ -16,7 +16,7 @@ namespace emiteat.NexUI.Query
     public sealed class UIQuery<T>
     {
         private readonly QueryKey _key;
-        private readonly Func<CancellationToken, UniTask<T>> _fetch;
+        private readonly Func<CancellationToken, Task<T>> _fetch;
         private readonly QueryCache _cache;
         private readonly RetryPolicy _retry;
         private readonly Func<T, bool> _isEmpty;
@@ -25,7 +25,7 @@ namespace emiteat.NexUI.Query
 
         public UIQuery(
             QueryKey key,
-            Func<CancellationToken, UniTask<T>> fetch,
+            Func<CancellationToken, Task<T>> fetch,
             QueryCache cache = null,
             RetryPolicy retry = null,
             Func<T, bool> isEmpty = null)
@@ -37,7 +37,7 @@ namespace emiteat.NexUI.Query
             _isEmpty = isEmpty ?? DefaultIsEmpty;
         }
 
-        public async UniTask RunAsync(CancellationToken ct = default, bool allowCache = true)
+        public async Task RunAsync(CancellationToken ct = default, bool allowCache = true)
         {
             if (allowCache && _cache != null &&
                 _cache.TryGet<T>(_key, out var cached, out var stale) && !stale)
@@ -66,7 +66,7 @@ namespace emiteat.NexUI.Query
                 {
                     if (_retry.ShouldRetry(attempt))
                     {
-                        await UniTask.Delay(_retry.DelayFor(attempt), DelayType.UnscaledDeltaTime, PlayerLoopTiming.Update, ct);
+                        await Task.Delay(_retry.DelayFor(attempt), ct);
                         attempt++;
                         continue;
                     }

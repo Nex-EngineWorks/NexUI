@@ -1,7 +1,7 @@
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using Cysharp.Threading.Tasks;
 using NUnit.Framework;
 using UnityEngine;
 using emiteat.NexUI.Abstractions;
@@ -107,7 +107,7 @@ namespace emiteat.NexUI.Tests.EditMode
             Assert.AreEqual(1, factory.CreateCount);
 
             factory.Release();
-            await UniTask.WhenAll(first, second);
+            await Task.WhenAll(first, second);
 
             Assert.AreEqual(1, factory.CreateCount);
             Assert.IsTrue(manager.IsOpen("HUD"));
@@ -262,10 +262,10 @@ namespace emiteat.NexUI.Tests.EditMode
         {
             private readonly List<string> _order;
             public TestHandler(List<string> order) => _order = order;
-            public UniTask HandleAsync(TestCommand command, UICommandContext context)
+            public Task HandleAsync(TestCommand command, UICommandContext context)
             {
                 _order.Add("handler");
-                return UniTask.CompletedTask;
+                return Task.CompletedTask;
             }
         }
 
@@ -274,7 +274,7 @@ namespace emiteat.NexUI.Tests.EditMode
             private readonly string _name;
             private readonly List<string> _order;
             public RecordingMiddleware(string name, List<string> order) { _name = name; _order = order; }
-            public async UniTask InvokeAsync(IUICommand command, UICommandContext context, System.Func<UniTask> next)
+            public async Task InvokeAsync(IUICommand command, UICommandContext context, Func<Task> next)
             {
                 _order.Add(_name);
                 await next();
@@ -283,18 +283,57 @@ namespace emiteat.NexUI.Tests.EditMode
 
         private sealed class GatedFactory : IUIScreenFactory
         {
-            private readonly UniTaskCompletionSource _gate = new UniTaskCompletionSource();
+            private readonly TaskCompletionSource<bool> _gate =
+                new TaskCompletionSource<bool>(
+                    TaskCreationOptions.RunContinuationsAsynchronously);
+
             public int CreateCount { get; private set; }
+
             public UIRenderBackend Backend => UIRenderBackend.UGUI;
 
-            public async UniTask<IUISurface> CreateAsync(UIScreenDefinition definition, IUISurface parentLayer, CancellationToken ct)
+            public async Task<IUISurface> CreateAsync(
+                UIScreenDefinition definition,
+                IUISurface parentLayer,
+                CancellationToken ct)
             {
                 CreateCount++;
-                await _gate.Task.AttachExternalCancellation(ct);
+
+                await WaitWithCancellationAsync(_gate.Task, ct);
+
                 return new FakeSurface(definition.ScreenId);
             }
 
-            public void Release() => _gate.TrySetResult();
+            public void Release()
+            {
+                _gate.TrySetResult(true);
+            }
+
+            private static async Task WaitWithCancellationAsync(
+                Task task,
+                CancellationToken ct)
+            {
+                if (task.IsCompleted)
+                {
+                    await task;
+                    return;
+                }
+
+                if (!ct.CanBeCanceled)
+                {
+                    await task;
+                    return;
+                }
+
+                var cancellationTask = Task.Delay(
+                    Timeout.Infinite,
+                    ct);
+
+                var completed = await Task.WhenAny(
+                    task,
+                    cancellationTask);
+
+                await completed;
+            }
         }
 
         private sealed class CountingFactory : IUIScreenFactory
@@ -302,10 +341,11 @@ namespace emiteat.NexUI.Tests.EditMode
             public int CreateCount { get; private set; }
             public UIRenderBackend Backend => UIRenderBackend.UGUI;
 
-            public UniTask<IUISurface> CreateAsync(UIScreenDefinition definition, IUISurface parentLayer, CancellationToken ct)
+            public Task<IUISurface> CreateAsync(UIScreenDefinition definition, IUISurface parentLayer,
+                CancellationToken ct)
             {
                 CreateCount++;
-                return UniTask.FromResult<IUISurface>(new FakeSurface(definition.ScreenId));
+                return Task.FromResult<IUISurface>(new FakeSurface(definition.ScreenId));
             }
         }
 
@@ -314,8 +354,9 @@ namespace emiteat.NexUI.Tests.EditMode
             private readonly IUISurface _surface;
             public SurfaceFactory(IUISurface surface) => _surface = surface;
             public UIRenderBackend Backend => UIRenderBackend.UGUI;
-            public UniTask<IUISurface> CreateAsync(UIScreenDefinition definition, IUISurface parentLayer, CancellationToken ct)
-                => UniTask.FromResult(_surface);
+            public Task<IUISurface> CreateAsync(UIScreenDefinition definition, IUISurface parentLayer,
+                CancellationToken ct)
+                => Task.FromResult(_surface);
         }
     }
 }

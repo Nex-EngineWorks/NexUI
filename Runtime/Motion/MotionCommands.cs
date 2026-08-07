@@ -1,4 +1,5 @@
 using System.Threading;
+using System.Threading.Tasks;
 using Cysharp.Threading.Tasks;
 using emiteat.NexUI.Abstractions;
 
@@ -29,7 +30,7 @@ namespace emiteat.NexUI.Motion
 
         public PlayMotionCommandHandler(IUIMotionPlayer player) => _player = player;
 
-        public UniTask HandleAsync(PlayMotionCommand command, UICommandContext context)
+        public Task HandleAsync(PlayMotionCommand command, UICommandContext context)
             => _player.PlayAsync(command.Target, command.Timeline, CancellationToken.None);
     }
 }

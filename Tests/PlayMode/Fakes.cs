@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using System.Threading.Tasks;
 using Cysharp.Threading.Tasks;
 using emiteat.NexUI.Abstractions;
 using emiteat.NexUI.Core;
@@ -111,10 +112,10 @@ namespace emiteat.NexUI.Tests.Fakes
         public FakeSurface Last { get; private set; }
         public FakeScreenFactory(UIRenderBackend backend = UIRenderBackend.UGUI) => _backend = backend;
         public UIRenderBackend Backend => _backend;
-        public UniTask<IUISurface> CreateAsync(UIScreenDefinition definition, IUISurface parentLayer, CancellationToken ct)
+        public Task<IUISurface> CreateAsync(UIScreenDefinition definition, IUISurface parentLayer, CancellationToken ct)
         {
             Last = new FakeSurface(definition.ScreenId, _backend);
-            return UniTask.FromResult<IUISurface>(Last);
+            return Task.FromResult<IUISurface>(Last);
         }
     }
 

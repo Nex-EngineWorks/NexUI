@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 using Cysharp.Threading.Tasks;
 using emiteat.NexUI.Abstractions;
 using UnityEngine;
@@ -48,10 +49,17 @@ namespace emiteat.NexUI.Core
         private sealed class TransitionHandle
         {
             public readonly CancellationTokenSource Cancellation;
-            public readonly UniTaskCompletionSource Completion = new UniTaskCompletionSource();
+
+            public readonly TaskCompletionSource<bool> Completion =
+                new TaskCompletionSource<bool>(
+                    TaskCreationOptions.RunContinuationsAsynchronously);
 
             public TransitionHandle(CancellationToken lifetimeToken)
-                => Cancellation = CancellationTokenSource.CreateLinkedTokenSource(lifetimeToken);
+            {
+                Cancellation =
+                    CancellationTokenSource.CreateLinkedTokenSource(
+                        lifetimeToken);
+            }
         }
 
         public IUIMotionPlayer MotionPlayer { get; set; }
@@ -125,7 +133,7 @@ namespace emiteat.NexUI.Core
             => _open.TryGetValue(screenId, out var inst) ? inst.Surface : null;
 
         /// <summary>Creates and retains every screen configured for startup preloading.</summary>
-        public async UniTask PreloadAsync()
+        public async Task PreloadAsync()
         {
             var ids = _registry.Definitions.Values
                 .Where(def => def != null && def.loadStrategy == UIScreenLoadStrategy.Preload)
@@ -136,7 +144,7 @@ namespace emiteat.NexUI.Core
         }
 
         /// <summary>Creates one inactive surface now so its first OpenAsync does not instantiate.</summary>
-        public async UniTask PreloadAsync(string screenId)
+        public async Task PreloadAsync(string screenId)
         {
             if (!_registry.TryGet(screenId, out var def))
             {
@@ -181,10 +189,10 @@ namespace emiteat.NexUI.Core
 
         // ---- Open -----------------------------------------------------------
 
-        public UniTask OpenAsync(string screenId, UIOpenArgs args = default)
+        public Task OpenAsync(string screenId, UIOpenArgs args = default)
             => OpenInternalAsync(screenId, args, false, new HashSet<string>());
 
-        private async UniTask OpenInternalAsync(string screenId, UIOpenArgs args, bool fromToastQueue,
+        private async Task OpenInternalAsync(string screenId, UIOpenArgs args, bool fromToastQueue,
             HashSet<string> relationChain)
         {
             relationChain ??= new HashSet<string>();
@@ -355,7 +363,7 @@ namespace emiteat.NexUI.Core
 
         // ---- Close ----------------------------------------------------------
 
-        public async UniTask CloseAsync(string screenId, UICloseArgs args = default)
+        public async Task CloseAsync(string screenId, UICloseArgs args = default)
         {
             if (!_registry.TryGet(screenId, out var registeredDef) && !_open.ContainsKey(screenId))
                 return;
@@ -460,10 +468,10 @@ namespace emiteat.NexUI.Core
 
         // ---- Toggle / Back --------------------------------------------------
 
-        public UniTask ToggleAsync(string screenId)
+        public Task ToggleAsync(string screenId)
             => IsOpen(screenId) ? CloseAsync(screenId) : OpenAsync(screenId);
 
-        public async UniTask BackAsync()
+        public async Task BackAsync()
         {
             while (_backStack.TryPop(out var screenId))
             {
@@ -483,7 +491,7 @@ namespace emiteat.NexUI.Core
 
         // ---- Internals ------------------------------------------------------
 
-        private async UniTask CloseLayerExceptAsync(UILayerType layer, string keepScreenId)
+        private async Task CloseLayerExceptAsync(UILayerType layer, string keepScreenId)
         {
             var toClose = _open.Values
                 .Where(i => i.Layer == layer && i.ScreenId != keepScreenId)
@@ -494,14 +502,14 @@ namespace emiteat.NexUI.Core
                 await CloseAsync(id, new UICloseArgs { immediate = true });
         }
 
-        private async UniTask DrainToastQueueAsync()
+        private async Task DrainToastQueueAsync()
         {
             if (_toastQueue.ActiveScreenId != null) return;
             if (_toastQueue.TryDequeue(out var req))
                 await OpenInternalAsync(req.screenId, req.args, true, new HashSet<string>());
         }
 
-        private async UniTask PlayMotionAsync(IUISurface surface, UnityEngine.Object motionAsset, CancellationToken token)
+        private async Task PlayMotionAsync(IUISurface surface, UnityEngine.Object motionAsset, CancellationToken token)
         {
             if (MotionPlayer == null || MotionResolver == null || motionAsset == null || surface?.RootHandle == null)
                 return;
@@ -513,7 +521,7 @@ namespace emiteat.NexUI.Core
             await MotionPlayer.PlayAsync(surface.RootHandle, timeline, token);
         }
 
-        private async UniTask<IUISurface> CreateSurfaceAsync(
+        private async Task<IUISurface> CreateSurfaceAsync(
             UIScreenDefinition definition, IUISurface parent, IUIScreenFactory factory, CancellationToken token)
         {
             if (definition.loadStrategy != UIScreenLoadStrategy.Addressable)
@@ -701,7 +709,7 @@ namespace emiteat.NexUI.Core
             return true;
         }
 
-        private async UniTask<TransitionHandle> BeginTransitionAsync(string screenId, UITransitionConflictPolicy policy)
+        private async Task<TransitionHandle> BeginTransitionAsync(string screenId, UITransitionConflictPolicy policy)
         {
             while (_transitions.TryGetValue(screenId, out var current))
             {
@@ -717,11 +725,17 @@ namespace emiteat.NexUI.Core
             return handle;
         }
 
-        private void EndTransition(string screenId, TransitionHandle handle)
+        private void EndTransition(
+            string screenId,
+            TransitionHandle handle)
         {
-            if (_transitions.TryGetValue(screenId, out var current) && ReferenceEquals(current, handle))
+            if (_transitions.TryGetValue(screenId, out var current) &&
+                ReferenceEquals(current, handle))
+            {
                 _transitions.Remove(screenId);
-            handle.Completion.TrySetResult();
+            }
+
+            handle.Completion.TrySetResult(true);
             handle.Cancellation.Dispose();
         }
 
@@ -792,7 +806,7 @@ namespace emiteat.NexUI.Core
             foreach (var transition in _transitions.Values.ToList())
             {
                 transition.Cancellation.Cancel();
-                transition.Completion.TrySetResult();
+                transition.Completion.TrySetResult(true);
             }
             _transitions.Clear();
             foreach (var inst in _open.Values.ToList())

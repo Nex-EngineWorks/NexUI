@@ -1,4 +1,5 @@
 using System.Threading;
+using System.Threading.Tasks;
 using Cysharp.Threading.Tasks;
 using emiteat.NexUI.Abstractions;
 
@@ -10,22 +11,22 @@ namespace emiteat.NexUI.Motion
     /// </summary>
     public static class AnimatePresence
     {
-        public static UniTask PlayEnterAsync(
+        public static Task PlayEnterAsync(
             IUIMotionPlayer player, IUIElementHandle target,
             UIMotionPreset preset, CancellationToken ct = default)
             => Play(player, target, preset, "enter", ct);
 
-        public static UniTask PlayExitAsync(
+        public static Task PlayExitAsync(
             IUIMotionPlayer player, IUIElementHandle target,
             UIMotionPreset preset, CancellationToken ct = default)
             => Play(player, target, preset, "exit", ct);
 
-        private static UniTask Play(
+        private static Task Play(
             IUIMotionPlayer player, IUIElementHandle target,
             UIMotionPreset preset, string variant, CancellationToken ct)
         {
             if (player == null || target == null || preset == null)
-                return UniTask.CompletedTask;
+                return Task.CompletedTask;
 
             var timeline = MotionCompiler.Compile(preset, variant);
             return player.PlayAsync(target, timeline, ct);

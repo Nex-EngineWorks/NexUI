@@ -38,10 +38,10 @@ namespace emiteat.NexUI.Tests.PlayMode
             manager.RegisterFactory(new FakeScreenFactory());
             manager.RegisterScreen(Screen("HUD", UILayerType.HUD, UIOpenPolicy.Single));
 
-            yield return Await(manager.OpenAsync("HUD").AsTask());
+            yield return Await(manager.OpenAsync("HUD"));
             Assert.IsTrue(manager.IsOpen("HUD"));
 
-            yield return Await(manager.CloseAsync("HUD").AsTask());
+            yield return Await(manager.CloseAsync("HUD"));
             Assert.IsFalse(manager.IsOpen("HUD"));
         }
 
@@ -52,10 +52,10 @@ namespace emiteat.NexUI.Tests.PlayMode
             manager.RegisterFactory(new FakeScreenFactory());
             manager.RegisterScreen(Screen("Pause", UILayerType.Modal, UIOpenPolicy.StackPush));
 
-            yield return Await(manager.ToggleAsync("Pause").AsTask());
+            yield return Await(manager.ToggleAsync("Pause"));
             Assert.IsTrue(manager.IsOpen("Pause"));
 
-            yield return Await(manager.BackAsync().AsTask());
+            yield return Await(manager.BackAsync());
             Assert.IsFalse(manager.IsOpen("Pause"));
         }
 
@@ -82,15 +82,15 @@ namespace emiteat.NexUI.Tests.PlayMode
                 }
             };
 
-            yield return Await(player.PlayAsync(handle, timeline, CancellationToken.None).AsTask());
+            yield return Await(player.PlayAsync(handle, timeline, CancellationToken.None));
             Assert.AreEqual(1f, transform.Opacity, 0.01f);
         }
 
         [UnityTest]
         public IEnumerator UIQuery_SuccessState()
         {
-            var query = new UIQuery<int>(new QueryKey("n"), _ => UniTask.FromResult(7));
-            yield return Await(query.RunAsync().AsTask());
+            var query = new UIQuery<int>(new QueryKey("n"), _ => Task.FromResult(7));
+            yield return Await(query.RunAsync());
             Assert.IsTrue(query.State.Value.IsSuccess);
             Assert.AreEqual(7, query.State.Value.Data);
         }
