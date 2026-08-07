@@ -1,5 +1,5 @@
 using System;
-using Cysharp.Threading.Tasks;
+using System.Threading.Tasks;
 using emiteat.NexUI.Abstractions;
 
 namespace emiteat.NexUI.Core.Command
@@ -15,10 +15,10 @@ namespace emiteat.NexUI.Core.Command
         public CommandReplay(IUICommandDispatcher dispatcher)
             => _dispatcher = dispatcher ?? throw new ArgumentNullException(nameof(dispatcher));
 
-        public UniTask ReplayAsync(CommandLog log)
+        public Task ReplayAsync(CommandLog log)
             => ReplayUntilAsync(log, log?.Count ?? 0);
 
-        public async UniTask ReplayUntilAsync(CommandLog log, int exclusiveEndIndex)
+        public async Task ReplayUntilAsync(CommandLog log, int exclusiveEndIndex)
         {
             if (log == null) return;
             int end = Math.Min(exclusiveEndIndex, log.Count);

@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using Cysharp.Threading.Tasks;
 using emiteat.NexUI.Abstractions;
 using emiteat.NexUI.Core;
 using emiteat.NexUI.MotionClip;
@@ -142,16 +141,16 @@ namespace emiteat.NexUI.Tests.Fakes
         public int EvaluateCount;
         public float LastEvaluatedTime;
 
-        private UniTaskCompletionSource _pending;
+        private TaskCompletionSource<bool> _pending;
 
-        public UniTask PlayAsync(IUISurface surface, UIMotionClip clip, CancellationToken cancellationToken = default)
+        public Task PlayAsync(IUISurface surface, UIMotionClip clip, CancellationToken cancellationToken = default)
         {
             PlayCount++;
-            _pending = new UniTaskCompletionSource();
+            _pending = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
             return _pending.Task;
         }
 
-        public void CompletePending() => _pending?.TrySetResult();
+        public void CompletePending() => _pending?.TrySetResult(true);
 
         public void Stop() => StopCount++;
 

@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using Cysharp.Threading.Tasks;
+using System.Threading.Tasks;
 using emiteat.NexUI.Abstractions;
 using UnityEngine;
 
@@ -19,7 +19,7 @@ namespace emiteat.NexUI.MotionGraph
     {
         public string NodeType => "Data.Expression";
 
-        public UniTask ExecuteAsync(UIGraphNodeExecutionArgs args)
+        public Task ExecuteAsync(UIGraphNodeExecutionArgs args)
         {
             var operation = args.ResolveInput("Operation").stringValue;
             var a = args.ResolveInput("A");
@@ -51,7 +51,7 @@ namespace emiteat.NexUI.MotionGraph
     {
         public string NodeType => "Data.SetFloatVariable";
 
-        public UniTask ExecuteAsync(UIGraphNodeExecutionArgs args)
+        public Task ExecuteAsync(UIGraphNodeExecutionArgs args)
         {
             var name = args.ResolveInput("Name").stringValue;
             if (!string.IsNullOrEmpty(name))
@@ -65,7 +65,7 @@ namespace emiteat.NexUI.MotionGraph
     {
         public string NodeType => "Data.SetBoolVariable";
 
-        public UniTask ExecuteAsync(UIGraphNodeExecutionArgs args)
+        public Task ExecuteAsync(UIGraphNodeExecutionArgs args)
         {
             var name = args.ResolveInput("Name").stringValue;
             if (!string.IsNullOrEmpty(name))
@@ -99,7 +99,7 @@ namespace emiteat.NexUI.MotionGraph
 
         public string NodeType => "Command.Dispatch";
 
-        public async UniTask ExecuteAsync(UIGraphNodeExecutionArgs args)
+        public async Task ExecuteAsync(UIGraphNodeExecutionArgs args)
         {
             var commandId = args.ResolveInput("CommandId").stringValue;
             if (string.IsNullOrEmpty(commandId) || args.Context.CommandDispatcher == null)
@@ -140,7 +140,7 @@ namespace emiteat.NexUI.MotionGraph
     {
         public string NodeType => "Flow.Repeat";
 
-        public async UniTask ExecuteAsync(UIGraphNodeExecutionArgs args)
+        public async Task ExecuteAsync(UIGraphNodeExecutionArgs args)
         {
             var count = args.ResolveInput("Count").intValue;
 
@@ -172,20 +172,45 @@ namespace emiteat.NexUI.MotionGraph
     {
         public string NodeType => "Flow.Timeout";
 
-        public async UniTask ExecuteAsync(UIGraphNodeExecutionArgs args)
+        public async Task ExecuteAsync(UIGraphNodeExecutionArgs args)
         {
-            var duration = Mathf.Max(0f, args.ResolveInput("Duration").floatValue);
-            using (var cts = CancellationTokenSource.CreateLinkedTokenSource(args.CancellationToken))
-            {
-                var bodyTask = args.RunNext("Body", cts.Token);
-                var timeoutTask = UniTask.Delay(TimeSpan.FromSeconds(duration), DelayType.UnscaledDeltaTime,
-                    PlayerLoopTiming.Update, cts.Token);
+            var duration =
+                Mathf.Max(0f, args.ResolveInput("Duration").floatValue);
 
-                var winnerIndex = await UniTask.WhenAny(bodyTask, timeoutTask);
+            using var cts =
+                CancellationTokenSource.CreateLinkedTokenSource(
+                    args.CancellationToken);
+
+            var bodyTask = args.RunNext(
+                "Body",
+                cts.Token);
+
+            var timeoutTask = Task.Delay(
+                TimeSpan.FromSeconds(duration),
+                cts.Token);
+
+            var completedTask = await Task.WhenAny(
+                bodyTask,
+                timeoutTask);
+
+            if (completedTask == bodyTask)
+            {
                 cts.Cancel();
 
-                await args.RunNext(winnerIndex == 0 ? "Completed" : "TimedOut", args.CancellationToken);
+                await bodyTask;
+
+                await args.RunNext(
+                    "Completed",
+                    args.CancellationToken);
+
+                return;
             }
+
+            cts.Cancel();
+
+            await args.RunNext(
+                "TimedOut",
+                args.CancellationToken);
         }
     }
 
@@ -198,7 +223,7 @@ namespace emiteat.NexUI.MotionGraph
     {
         public string NodeType => "Flow.Race";
 
-        public async UniTask ExecuteAsync(UIGraphNodeExecutionArgs args)
+        public async Task ExecuteAsync(UIGraphNodeExecutionArgs args)
         {
             if (args.Node.flowOutputs.Length == 0)
             {
@@ -208,7 +233,7 @@ namespace emiteat.NexUI.MotionGraph
 
             using (var cts = CancellationTokenSource.CreateLinkedTokenSource(args.CancellationToken))
             {
-                var branches = new List<UniTask>();
+                var branches = new List<Task>();
                 for (var i = 0; i < args.Node.flowOutputs.Length; i++)
                 {
                     var output = args.Node.flowOutputs[i];
@@ -218,7 +243,7 @@ namespace emiteat.NexUI.MotionGraph
                     branches.Add(args.RunNext(output.name, cts.Token));
                 }
 
-                if (branches.Count > 0) await UniTask.WhenAny(branches);
+                if (branches.Count > 0) await Task.WhenAny(branches);
                 cts.Cancel();
             }
 
@@ -237,7 +262,7 @@ namespace emiteat.NexUI.MotionGraph
     {
         public string NodeType => "Graph.RunSubgraph";
 
-        public async UniTask ExecuteAsync(UIGraphNodeExecutionArgs args)
+        public async Task ExecuteAsync(UIGraphNodeExecutionArgs args)
         {
             var subgraph = args.ResolveInput("Graph").motionGraphValue;
             var eventName = args.ResolveInput("EventName").stringValue;

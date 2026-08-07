@@ -1,5 +1,5 @@
 using System.Threading;
-using Cysharp.Threading.Tasks;
+using System.Threading.Tasks;
 
 namespace emiteat.NexUI.Motion
 {
@@ -13,10 +13,10 @@ namespace emiteat.NexUI.Motion
 
         public string ElementId { get; }
         public string MotionId { get; }
-        public UniTask Completion { get; }
-        public bool IsPlaying => Completion.Status == UniTaskStatus.Pending;
+        public Task Completion { get; }
+        public bool IsPlaying => Completion.Status == TaskStatus.Running;
 
-        public MotionPlaybackHandle(string elementId, string motionId, UniTask completion, CancellationTokenSource cts)
+        public MotionPlaybackHandle(string elementId, string motionId, Task completion, CancellationTokenSource cts)
         {
             ElementId = elementId;
             MotionId = motionId;

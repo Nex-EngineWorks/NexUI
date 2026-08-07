@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Cysharp.Threading.Tasks;
 using NUnit.Framework;
 using UnityEngine;
 using emiteat.NexUI.MotionGraph;
@@ -16,7 +15,7 @@ namespace emiteat.NexUI.Tests.EditMode
             public string NodeType => "Test.Record";
             private readonly List<string> _log;
             public RecordNodeExecutor(List<string> log) => _log = log;
-            public UniTask ExecuteAsync(UIGraphNodeExecutionArgs args)
+            public Task ExecuteAsync(UIGraphNodeExecutionArgs args)
             {
                 _log.Add(args.Node.id);
                 return args.RunNext("Next", args.CancellationToken);
@@ -27,10 +26,10 @@ namespace emiteat.NexUI.Tests.EditMode
         {
             public string NodeType { get; }
             public bool Started { get; private set; }
-            private readonly UniTaskCompletionSource _gate = new UniTaskCompletionSource();
+            private readonly TaskCompletionSource<bool> _gate = new TaskCompletionSource<bool>();
             public GatedNodeExecutor(string nodeType) => NodeType = nodeType;
-            public UniTask ExecuteAsync(UIGraphNodeExecutionArgs args) { Started = true; return _gate.Task; }
-            public void Release() => _gate.TrySetResult();
+            public Task ExecuteAsync(UIGraphNodeExecutionArgs args) { Started = true; return _gate.Task; }
+            public void Release() => _gate.TrySetResult(true);
         }
 
         private static UIMotionGraphAsset MakeGraph(UIGraphNode[] nodes, string startNodeId)
@@ -396,7 +395,7 @@ namespace emiteat.NexUI.Tests.EditMode
         private sealed class ThrowingNodeExecutor : IUIGraphNodeExecutor
         {
             public string NodeType => "Test.Throw";
-            public UniTask ExecuteAsync(UIGraphNodeExecutionArgs args) => throw new System.InvalidOperationException("boom");
+            public Task ExecuteAsync(UIGraphNodeExecutionArgs args) => throw new System.InvalidOperationException("boom");
         }
     }
 }

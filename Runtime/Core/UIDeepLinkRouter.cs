@@ -1,5 +1,5 @@
 using System;
-using Cysharp.Threading.Tasks;
+using System.Threading.Tasks;
 
 namespace emiteat.NexUI.Core
 {
@@ -20,7 +20,7 @@ namespace emiteat.NexUI.Core
 
         public UIDeepLinkRouter(UIManager manager) => _manager = manager;
 
-        public async UniTask NavigateAsync(string link, UIOpenArgs args = default)
+        public async Task NavigateAsync(string link, UIOpenArgs args = default)
         {
             var deepLink = UIDeepLink.Parse(link);
             if (string.IsNullOrEmpty(deepLink.ScreenId)) return;

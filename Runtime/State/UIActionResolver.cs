@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using Cysharp.Threading.Tasks;
+using System.Threading.Tasks;
 using UnityEngine;
 
 namespace emiteat.NexUI.State
@@ -11,15 +11,15 @@ namespace emiteat.NexUI.State
     /// </summary>
     public sealed class UIActionResolver
     {
-        private readonly Dictionary<string, Func<UniTask>> _actions = new Dictionary<string, Func<UniTask>>();
+        private readonly Dictionary<string, Func<Task>> _actions = new Dictionary<string, Func<Task>>();
 
         public void Register(string key, Action action)
         {
             if (action == null) return;
-            _actions[key] = () => { action(); return UniTask.CompletedTask; };
+            _actions[key] = () => { action(); return Task.CompletedTask; };
         }
 
-        public void Register(string key, Func<UniTask> asyncAction)
+        public void Register(string key, Func<Task> asyncAction)
         {
             if (asyncAction == null) return;
             _actions[key] = asyncAction;
@@ -32,7 +32,7 @@ namespace emiteat.NexUI.State
 
         public void Unregister(string key) => _actions.Remove(key);
 
-        public async UniTask ExecuteAsync(string key)
+        public async Task ExecuteAsync(string key)
         {
             if (_actions.TryGetValue(key, out var action))
             {

@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using Cysharp.Threading.Tasks;
 using emiteat.NexUI.Abstractions;
 using UnityEngine;
 using UnityTime = UnityEngine.Time;
@@ -9,146 +8,266 @@ using UnityTime = UnityEngine.Time;
 namespace emiteat.NexUI.Motion
 {
     /// <summary>
-    /// Fallback motion player. Drives a compiled <see cref="UIMotionTimeline"/> against an
-    /// element's <see cref="IUITransformCapability"/> using an unscaled-time UniTask loop, so
-    /// animations still run while the game is paused. Supports Opacity / Position / Scale /
-    /// Rotation with Linear and EaseInOut easing.
-    ///
-    /// It never touches a UI backend. Advanced easing, sequencing and blending are deferred
-    /// to the DOTween integration.
+    /// Fallback motion player.
+    /// Drives a compiled UIMotionTimeline using unscaled Unity time.
     /// </summary>
     public sealed class BuiltInMotionPlayer : IUIMotionPlayer
     {
         private readonly Dictionary<IUIElementHandle, CancellationTokenSource> _active =
             new Dictionary<IUIElementHandle, CancellationTokenSource>();
 
-        public async Task PlayAsync(IUIElementHandle target, UIMotionTimeline timeline, CancellationToken ct)
+        public async Task PlayAsync(
+            IUIElementHandle target,
+            UIMotionTimeline timeline,
+            CancellationToken ct)
         {
-            if (target == null || timeline?.Tracks == null || timeline.Tracks.Length == 0)
+            if (target == null ||
+                timeline?.Tracks == null ||
+                timeline.Tracks.Length == 0)
+            {
                 return;
+            }
 
-            var cap = target.As<IUITransformCapability>();
-            if (cap == null)
+            var capability = target.As<IUITransformCapability>();
+
+            if (capability == null)
             {
                 Debug.LogWarning(
-                    $"[NexUI] BuiltInMotionPlayer: element '{target.Id}' has no IUITransformCapability; motion skipped.");
+                    $"[NexUI] BuiltInMotionPlayer: element '{target.Id}' " +
+                    "has no IUITransformCapability; motion skipped.");
+
                 return;
             }
 
             Stop(target);
-            var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+
+            var cts =
+                CancellationTokenSource.CreateLinkedTokenSource(ct);
+
             _active[target] = cts;
 
-            float total = timeline.TotalDuration;
-            float elapsed = 0f;
-
-            MotionEvents.RaiseStarted(target.Id, timeline.MotionId);
-            ApplyAt(cap, timeline, 0f);
-
-            while (elapsed < total)
+            try
             {
-                bool canceled = await UniTask.Yield(PlayerLoopTiming.Update, cts.Token).SuppressCancellationThrow();
-                if (canceled) break;
-                elapsed += UnityTime.unscaledDeltaTime;
-                ApplyAt(cap, timeline, elapsed);
+                var total = timeline.TotalDuration;
+                var elapsed = 0f;
+
+                MotionEvents.RaiseStarted(
+                    target.Id,
+                    timeline.MotionId);
+
+                ApplyAt(
+                    capability,
+                    timeline,
+                    0f);
+
+                while (elapsed < total)
+                {
+                    await Task.Yield();
+
+                    if (cts.IsCancellationRequested)
+                    {
+                        break;
+                    }
+
+                    elapsed += UnityTime.unscaledDeltaTime;
+
+                    ApplyAt(
+                        capability,
+                        timeline,
+                        Mathf.Min(elapsed, total));
+                }
+
+                if (!cts.IsCancellationRequested)
+                {
+                    ApplyAt(
+                        capability,
+                        timeline,
+                        total);
+
+                    MotionEvents.RaiseCompleted(
+                        target.Id,
+                        timeline.MotionId);
+                }
             }
-
-            bool wasCanceled = cts.IsCancellationRequested;
-            if (!wasCanceled)
+            finally
             {
-                ApplyAt(cap, timeline, total);
-                MotionEvents.RaiseCompleted(target.Id, timeline.MotionId);
-            }
+                if (_active.TryGetValue(target, out var current) &&
+                    ReferenceEquals(current, cts))
+                {
+                    _active.Remove(target);
+                }
 
-            if (_active.TryGetValue(target, out var current) && current == cts)
-                _active.Remove(target);
-            cts.Dispose();
-        }
-
-        public void Stop(IUIElementHandle target)
-        {
-            if (target == null) return;
-            if (_active.TryGetValue(target, out var cts))
-            {
-                _active.Remove(target);
-                if (!cts.IsCancellationRequested) cts.Cancel();
                 cts.Dispose();
             }
         }
 
-        private static void ApplyAt(IUITransformCapability cap, UIMotionTimeline timeline, float time)
+        public void Stop(IUIElementHandle target)
+        {
+            if (target == null)
+            {
+                return;
+            }
+
+            if (!_active.TryGetValue(target, out var cts))
+            {
+                return;
+            }
+
+            _active.Remove(target);
+
+            if (!cts.IsCancellationRequested)
+            {
+                cts.Cancel();
+            }
+
+            // 여기서 Dispose하지 않는다.
+            // 실행 중인 PlayAsync의 finally에서 Dispose한다.
+        }
+
+        private static void ApplyAt(
+            IUITransformCapability capability,
+            UIMotionTimeline timeline,
+            float time)
         {
             foreach (var track in timeline.Tracks)
             {
-                if (track == null) continue;
-                float local = time - track.Delay;
-                if (local < 0f) local = 0f;
-                float n = track.Duration <= 0f ? 1f : Mathf.Clamp01(local / track.Duration);
-                float eased = Ease(track.Easing, n);
-                float value = Evaluate(track, eased);
-                ApplyProperty(cap, track.Property, value);
-            }
-        }
-
-        private static float Evaluate(UIMotionTrack track, float t)
-        {
-            var k = track.Keyframes;
-            if (k == null || k.Length == 0) return 0f;
-            if (k.Length == 1) return k[0].Value;
-
-            for (int i = 0; i < k.Length - 1; i++)
-            {
-                if (t <= k[i + 1].Time)
+                if (track == null)
                 {
-                    float span = k[i + 1].Time - k[i].Time;
-                    float localT = span <= 0f ? 0f : (t - k[i].Time) / span;
-                    return Mathf.Lerp(k[i].Value, k[i + 1].Value, localT);
+                    continue;
                 }
+
+                var localTime = time - track.Delay;
+
+                if (localTime < 0f)
+                {
+                    localTime = 0f;
+                }
+
+                var normalizedTime =
+                    track.Duration <= 0f
+                        ? 1f
+                        : Mathf.Clamp01(
+                            localTime / track.Duration);
+
+                var eased =
+                    Ease(
+                        track.Easing,
+                        normalizedTime);
+
+                var value =
+                    Evaluate(
+                        track,
+                        eased);
+
+                ApplyProperty(
+                    capability,
+                    track.Property,
+                    value);
             }
-            return k[k.Length - 1].Value;
         }
 
-        private static float Ease(UIMotionEasing easing, float t)
+        private static float Evaluate(
+            UIMotionTrack track,
+            float time)
+        {
+            var keyframes = track.Keyframes;
+
+            if (keyframes == null ||
+                keyframes.Length == 0)
+            {
+                return 0f;
+            }
+
+            if (keyframes.Length == 1)
+            {
+                return keyframes[0].Value;
+            }
+
+            for (var i = 0; i < keyframes.Length - 1; i++)
+            {
+                if (time > keyframes[i + 1].Time)
+                {
+                    continue;
+                }
+
+                var span =
+                    keyframes[i + 1].Time -
+                    keyframes[i].Time;
+
+                var localTime =
+                    span <= 0f
+                        ? 0f
+                        : (time - keyframes[i].Time) / span;
+
+                return Mathf.Lerp(
+                    keyframes[i].Value,
+                    keyframes[i + 1].Value,
+                    localTime);
+            }
+
+            return keyframes[keyframes.Length - 1].Value;
+        }
+
+        private static float Ease(
+            UIMotionEasing easing,
+            float time)
         {
             switch (easing)
             {
                 case UIMotionEasing.EaseInOut:
-                    return t * t * (3f - 2f * t);
+                    return time * time * (3f - 2f * time);
+
                 case UIMotionEasing.Linear:
                 default:
-                    return t;
+                    return time;
             }
         }
 
-        private static void ApplyProperty(IUITransformCapability cap, UIMotionProperty property, float value)
+        private static void ApplyProperty(
+            IUITransformCapability capability,
+            UIMotionProperty property,
+            float value)
         {
             switch (property)
             {
                 case UIMotionProperty.Opacity:
-                    cap.Opacity = value;
+                    capability.Opacity = value;
                     break;
+
                 case UIMotionProperty.PositionX:
                 {
-                    var p = cap.Position; p.x = value; cap.Position = p;
+                    var position = capability.Position;
+                    position.x = value;
+                    capability.Position = position;
                     break;
                 }
+
                 case UIMotionProperty.PositionY:
                 {
-                    var p = cap.Position; p.y = value; cap.Position = p;
+                    var position = capability.Position;
+                    position.y = value;
+                    capability.Position = position;
                     break;
                 }
+
                 case UIMotionProperty.ScaleX:
                 {
-                    var s = cap.Scale; s.x = value; cap.Scale = s;
+                    var scale = capability.Scale;
+                    scale.x = value;
+                    capability.Scale = scale;
                     break;
                 }
+
                 case UIMotionProperty.ScaleY:
                 {
-                    var s = cap.Scale; s.y = value; cap.Scale = s;
+                    var scale = capability.Scale;
+                    scale.y = value;
+                    capability.Scale = scale;
                     break;
                 }
+
                 case UIMotionProperty.Rotation:
-                    cap.Rotation = value;
+                    capability.Rotation = value;
                     break;
             }
         }

@@ -1,4 +1,4 @@
-using Cysharp.Threading.Tasks;
+using System.Threading.Tasks;
 using emiteat.NexUI.Abstractions;
 
 namespace emiteat.NexUI.Theme
@@ -24,10 +24,10 @@ namespace emiteat.NexUI.Theme
         /// Switch theme, optionally flagging a transition. The visual cross-fade itself is a
         /// backend concern; this applies the end-state and notifies listeners.
         /// </summary>
-        public static UniTask UseAsync(string themeId, bool transition = false)
+        public static Task UseAsync(string themeId, bool transition = false)
         {
             Use(themeId);
-            return UniTask.CompletedTask;
+            return Task.CompletedTask;
         }
 
         public static void SetToken(string tokenKey, string value)

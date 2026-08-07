@@ -1,5 +1,5 @@
 using System.Threading;
-using Cysharp.Threading.Tasks;
+using System.Threading.Tasks;
 using emiteat.NexUI.Core;
 
 namespace emiteat.NexUI.MotionClip
@@ -14,10 +14,10 @@ namespace emiteat.NexUI.MotionClip
         private static readonly IUIMotionClipPlayer SharedPlayer = new UIMotionClipPlayer();
 
         /// <summary>Plays <paramref name="clip"/> against the currently open screen's surface.</summary>
-        public static UniTask PlayMotionClipAsync(this UIManager manager, string screenId, UIMotionClip clip, CancellationToken ct = default)
+        public static Task PlayMotionClipAsync(this UIManager manager, string screenId, UIMotionClip clip, CancellationToken ct = default)
         {
             var surface = manager?.GetSurface(screenId);
-            return surface == null ? UniTask.CompletedTask : SharedPlayer.PlayAsync(surface, clip, ct);
+            return surface == null ? Task.CompletedTask : SharedPlayer.PlayAsync(surface, clip, ct);
         }
     }
 }

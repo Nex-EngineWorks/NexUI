@@ -1,8 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using Cysharp.Threading.Tasks;
+using System.Threading.Tasks;
 using emiteat.NexUI.MotionClip;
+using UnityEngine;
 
 namespace emiteat.NexUI.MotionGraph
 {
@@ -38,7 +39,7 @@ namespace emiteat.NexUI.MotionGraph
     public sealed class EventNodeExecutor : IUIGraphNodeExecutor
     {
         public string NodeType => "Event";
-        public UniTask ExecuteAsync(UIGraphNodeExecutionArgs args) => args.RunNext("Next", args.CancellationToken);
+        public Task ExecuteAsync(UIGraphNodeExecutionArgs args) => args.RunNext("Next", args.CancellationToken);
     }
 
     /// <summary>Walks <c>Step0</c>, <c>Step1</c>, ... in the order they appear on the node, awaiting each before starting the next. New steps can be appended by adding more flow outputs (brief §13: "동적 출력 포트를 추가할 수 있게 하라").</summary>
@@ -46,7 +47,7 @@ namespace emiteat.NexUI.MotionGraph
     {
         public string NodeType => "Flow.Sequence";
 
-        public async UniTask ExecuteAsync(UIGraphNodeExecutionArgs args)
+        public async Task ExecuteAsync(UIGraphNodeExecutionArgs args)
         {
             foreach (var output in args.Node.flowOutputs)
             {
@@ -64,30 +65,74 @@ namespace emiteat.NexUI.MotionGraph
     {
         public string NodeType => "Flow.Parallel";
 
-        public async UniTask ExecuteAsync(UIGraphNodeExecutionArgs args)
+        public async Task ExecuteAsync(UIGraphNodeExecutionArgs args)
         {
-            var branches = new List<UniTask>();
-            foreach (var output in args.Node.flowOutputs)
-                branches.Add(args.RunNext(output.name, args.CancellationToken));
+            var branches = new List<Task>();
 
-            if (branches.Count == 0) return;
-            var policy = (args.ResolveInput("Completion Policy").stringValue ?? "All Finished")
-                .Replace(" ", string.Empty).Replace("_", string.Empty).ToLowerInvariant();
+            foreach (var output in args.Node.flowOutputs)
+            {
+                branches.Add(
+                    args.RunNext(
+                        output.name,
+                        args.CancellationToken));
+            }
+
+            if (branches.Count == 0)
+                return;
+
+            var policy =
+                (args.ResolveInput("Completion Policy").stringValue
+                 ?? "All Finished")
+                .Replace(" ", string.Empty)
+                .Replace("_", string.Empty)
+                .ToLowerInvariant();
+
             switch (policy)
             {
                 case "donotwait":
                 case "fireandforget":
-                    foreach (var branch in branches) branch.Forget();
+                {
+                    foreach (var branch in branches)
+                    {
+                        ObserveBranch(branch);
+                    }
+
                     return;
+                }
 
                 case "anyfinished":
                 case "any":
-                    await UniTask.WhenAny(branches);
+                {
+                    var completedTask =
+                        await Task.WhenAny(branches);
+
+                    // WhenAny 자체는 완료된 Task의 예외를 던지지 않으므로
+                    // 다시 await해서 예외를 관찰한다.
+                    await completedTask;
                     return;
+                }
 
                 default:
-                    await UniTask.WhenAll(branches);
+                {
+                    await Task.WhenAll(branches);
                     return;
+                }
+            }
+        }
+
+        private static async void ObserveBranch(Task branch)
+        {
+            try
+            {
+                await branch;
+            }
+            catch (OperationCanceledException)
+            {
+            }
+            catch (Exception exception)
+            {
+                Debug.LogError(
+                    $"Parallel graph branch failed: {exception}");
             }
         }
     }
@@ -97,13 +142,12 @@ namespace emiteat.NexUI.MotionGraph
     {
         public string NodeType => "Flow.Delay";
 
-        public async UniTask ExecuteAsync(UIGraphNodeExecutionArgs args)
+        public async Task ExecuteAsync(UIGraphNodeExecutionArgs args)
         {
             var duration = args.ResolveInput("Duration").floatValue;
             if (duration > 0f)
             {
-                await UniTask.Delay(TimeSpan.FromSeconds(duration), DelayType.UnscaledDeltaTime,
-                    PlayerLoopTiming.Update, args.CancellationToken).SuppressCancellationThrow();
+                await Task.Delay(TimeSpan.FromSeconds(duration), args.CancellationToken);
             }
             await args.RunNext("Next", args.CancellationToken);
         }
@@ -114,7 +158,7 @@ namespace emiteat.NexUI.MotionGraph
     {
         public string NodeType => "Flow.Branch";
 
-        public UniTask ExecuteAsync(UIGraphNodeExecutionArgs args)
+        public Task ExecuteAsync(UIGraphNodeExecutionArgs args)
         {
             var condition = args.ResolveInput("Condition").boolValue;
             return args.RunNext(condition ? "True" : "False", args.CancellationToken);
@@ -136,7 +180,7 @@ namespace emiteat.NexUI.MotionGraph
         public PlayMotionClipNodeExecutor(IUIMotionClipPlayer player = null)
             => _player = player ?? new UIMotionClipPlayer();
 
-        public async UniTask ExecuteAsync(UIGraphNodeExecutionArgs args)
+        public async Task ExecuteAsync(UIGraphNodeExecutionArgs args)
         {
             var clip = args.ResolveInput("Clip").motionClipValue;
             if (clip != null && args.Context.Surface != null)

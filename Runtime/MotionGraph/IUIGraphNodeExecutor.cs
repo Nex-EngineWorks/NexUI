@@ -1,11 +1,11 @@
 using System;
 using System.Threading;
-using Cysharp.Threading.Tasks;
+using System.Threading.Tasks;
 
 namespace emiteat.NexUI.MotionGraph
 {
     /// <summary>Continues execution to a node's named flow output (e.g. "Next", "True", "Step0"). A no-op if that output isn't wired to a target node.</summary>
-    public delegate UniTask UIGraphFlowRunner(string outputName, CancellationToken cancellationToken);
+    public delegate Task UIGraphFlowRunner(string outputName, CancellationToken cancellationToken);
 
     /// <summary>Everything a node executor needs, bundled so the interface doesn't grow a parameter per feature (same rationale as <c>MotionClipTimelineContext</c>).</summary>
     public sealed class UIGraphNodeExecutionArgs
@@ -33,6 +33,6 @@ namespace emiteat.NexUI.MotionGraph
     public interface IUIGraphNodeExecutor
     {
         string NodeType { get; }
-        UniTask ExecuteAsync(UIGraphNodeExecutionArgs args);
+        Task ExecuteAsync(UIGraphNodeExecutionArgs args);
     }
 }

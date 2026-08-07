@@ -1,5 +1,5 @@
 using System.Threading;
-using Cysharp.Threading.Tasks;
+using System.Threading.Tasks;
 using emiteat.NexUI.Abstractions;
 
 namespace emiteat.NexUI.MotionClip
@@ -30,7 +30,7 @@ namespace emiteat.NexUI.MotionClip
         /// current state (nor an Any-State fallback), the state still updates but nothing plays -
         /// callers shouldn't have to special-case "no motion for this state change".
         /// </summary>
-        public async UniTask TransitionToAsync(IUISurface surface, UIMotionStateMachine machine, UIMotionState to,
+        public async Task TransitionToAsync(IUISurface surface, UIMotionStateMachine machine, UIMotionState to,
             CancellationToken cancellationToken = default)
         {
             if (machine == null)

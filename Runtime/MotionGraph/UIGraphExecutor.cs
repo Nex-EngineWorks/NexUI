@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
-using Cysharp.Threading.Tasks;
+using System.Threading.Tasks;
 
 namespace emiteat.NexUI.MotionGraph
 {
@@ -30,16 +30,16 @@ namespace emiteat.NexUI.MotionGraph
                 _executors[executor.NodeType] = executor;
         }
 
-        public UniTask RunEventAsync(string eventName, UIGraphExecutionContext context, CancellationToken cancellationToken = default)
+        public Task RunEventAsync(string eventName, UIGraphExecutionContext context, CancellationToken cancellationToken = default)
         {
             var entryNodeId = _graph != null ? _graph.FindEntryNodeId(eventName) : null;
             return RunNodeAsync(entryNodeId, context, cancellationToken);
         }
 
-        public UniTask RunFromNodeAsync(string nodeId, UIGraphExecutionContext context, CancellationToken cancellationToken = default)
+        public Task RunFromNodeAsync(string nodeId, UIGraphExecutionContext context, CancellationToken cancellationToken = default)
             => RunNodeAsync(nodeId, context, cancellationToken);
 
-        private async UniTask RunNodeAsync(string nodeId, UIGraphExecutionContext context, CancellationToken cancellationToken)
+        private async Task RunNodeAsync(string nodeId, UIGraphExecutionContext context, CancellationToken cancellationToken)
         {
             if (string.IsNullOrEmpty(nodeId) || cancellationToken.IsCancellationRequested || _graph == null) return;
 

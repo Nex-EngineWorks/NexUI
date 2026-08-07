@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Cysharp.Threading.Tasks;
 using NUnit.Framework;
 using UnityEngine;
 using emiteat.NexUI.MotionClip;
@@ -17,7 +16,7 @@ namespace emiteat.NexUI.Tests.EditMode
             private readonly List<string> _log;
             public RecordNodeExecutor(List<string> log) => _log = log;
 
-            public UniTask ExecuteAsync(UIGraphNodeExecutionArgs args)
+            public Task ExecuteAsync(UIGraphNodeExecutionArgs args)
             {
                 _log.Add(args.Node.id);
                 return args.RunNext("Next", args.CancellationToken);
@@ -28,17 +27,17 @@ namespace emiteat.NexUI.Tests.EditMode
         {
             public string NodeType { get; }
             public bool Started { get; private set; }
-            private readonly UniTaskCompletionSource _gate = new UniTaskCompletionSource();
+            private readonly TaskCompletionSource<bool> _gate = new TaskCompletionSource<bool>();
 
             public GatedNodeExecutor(string nodeType) => NodeType = nodeType;
 
-            public UniTask ExecuteAsync(UIGraphNodeExecutionArgs args)
+            public Task ExecuteAsync(UIGraphNodeExecutionArgs args)
             {
                 Started = true;
                 return _gate.Task;
             }
 
-            public void Release() => _gate.TrySetResult();
+            public void Release() => _gate.TrySetResult(true);
         }
 
         private static UIMotionGraphAsset MakeGraph(UIGraphNode[] nodes, string startNodeId)
@@ -320,10 +319,10 @@ namespace emiteat.NexUI.Tests.EditMode
             private readonly System.Action<UIGraphValue> _onCapture;
             public CaptureNodeExecutor(System.Action<UIGraphValue> onCapture) => _onCapture = onCapture;
 
-            public UniTask ExecuteAsync(UIGraphNodeExecutionArgs args)
+            public Task ExecuteAsync(UIGraphNodeExecutionArgs args)
             {
                 _onCapture(args.ResolveInput("Target"));
-                return UniTask.CompletedTask;
+                return Task.CompletedTask;
             }
         }
     }
