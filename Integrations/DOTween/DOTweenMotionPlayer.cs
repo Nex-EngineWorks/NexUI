@@ -1,7 +1,7 @@
 #if DOTWEEN
 using System.Collections.Generic;
 using System.Threading;
-using Cysharp.Threading.Tasks;
+using System.Threading.Tasks;
 using DG.Tweening;
 using emiteat.NexUI.Abstractions;
 using emiteat.NexUI.Motion;
@@ -20,7 +20,7 @@ namespace emiteat.NexUI.Integrations.DOTween
         private readonly Dictionary<IUIElementHandle, Sequence> _active =
             new Dictionary<IUIElementHandle, Sequence>();
 
-        public async UniTask PlayAsync(IUIElementHandle target, UIMotionTimeline timeline, CancellationToken ct)
+        public async Task PlayAsync(IUIElementHandle target, UIMotionTimeline timeline, CancellationToken ct)
         {
             if (target == null || timeline?.Tracks == null || timeline.Tracks.Length == 0)
                 return;
@@ -34,7 +34,7 @@ namespace emiteat.NexUI.Integrations.DOTween
 
             Stop(target);
 
-            var tcs = new UniTaskCompletionSource<bool>();
+            var tcs = new TaskCompletionSource<bool>();
             var seq = DG.Tweening.DOTween.Sequence();
             seq.SetUpdate(isIndependentUpdate: true); // run while paused
 
