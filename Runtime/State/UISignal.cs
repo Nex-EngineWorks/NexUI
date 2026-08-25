@@ -10,9 +10,17 @@ namespace emiteat.NexUI.State
     /// </summary>
     public sealed class UISignal<T>
     {
+        private sealed class Listener
+        {
+            public Action<T> Handler;
+            public bool RemovedPending;
+        }
+
         private T _value;
-        private readonly List<Action<T>> _listeners = new List<Action<T>>();
+        private readonly List<Listener> _listeners = new List<Listener>();
         private readonly IEqualityComparer<T> _comparer;
+        /// <summary>>0 while a dispatch is running; removals defer to the end of the outermost one.</summary>
+        private int _dispatchDepth;
 
         public UISignal(T initial = default, IEqualityComparer<T> comparer = null)
         {
@@ -27,11 +35,27 @@ namespace emiteat.NexUI.State
             {
                 if (_comparer.Equals(_value, value)) return;
                 _value = value;
-                var snapshot = _listeners.ToArray();
-                for (int i = 0; i < snapshot.Length; i++)
+
+                // Allocation-free dispatch. The watermark excludes subscribers added during the
+                // dispatch; removals are deferred so a listener unsubscribing mid-dispatch still
+                // receives this value - identical to the old ToArray() snapshot semantics without
+                // the array.
+                _dispatchDepth++;
+                var watermark = _listeners.Count;
+                try
                 {
-                    try { snapshot[i]?.Invoke(value); }
-                    catch (Exception ex) { Debug.LogException(ex); }
+                    for (int i = 0; i < watermark; i++)
+                    {
+                        var handler = _listeners[i].Handler;
+                        try { handler?.Invoke(value); }
+                        catch (Exception ex) { Debug.LogException(ex); }
+                    }
+                }
+                finally
+                {
+                    _dispatchDepth--;
+                    if (_dispatchDepth == 0)
+                        _listeners.RemoveAll(IsRemovedPending);
                 }
             }
         }
@@ -40,14 +64,21 @@ namespace emiteat.NexUI.State
         public IDisposable Subscribe(Action<T> listener, bool fireImmediately = true)
         {
             if (listener == null) return EmptyDisposable.Instance;
-            _listeners.Add(listener);
+            var node = new Listener { Handler = listener };
+            _listeners.Add(node);
             if (fireImmediately)
             {
                 try { listener(_value); }
                 catch (Exception ex) { Debug.LogException(ex); }
             }
-            return new Unsub(() => _listeners.Remove(listener));
+            return new Unsub(() =>
+            {
+                if (_dispatchDepth > 0) node.RemovedPending = true;
+                else _listeners.Remove(node);
+            });
         }
+
+        private static bool IsRemovedPending(Listener node) => node.RemovedPending;
 
         private sealed class Unsub : IDisposable
         {

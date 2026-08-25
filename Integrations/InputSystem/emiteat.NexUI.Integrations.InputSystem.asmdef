@@ -6,8 +6,7 @@
         "emiteat.NexUI.Core",
         "emiteat.NexUI.Components",
         "emiteat.NexUI.Prompt",
-        "Unity.InputSystem",
-        "UniTask"
+        "Unity.InputSystem"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

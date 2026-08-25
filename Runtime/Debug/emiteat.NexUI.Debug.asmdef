@@ -7,8 +7,7 @@
         "emiteat.NexUI.State",
         "emiteat.NexUI.Motion",
         "emiteat.NexUI.Theme",
-        "emiteat.NexUI.Query",
-        "UniTask"
+        "emiteat.NexUI.Query"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

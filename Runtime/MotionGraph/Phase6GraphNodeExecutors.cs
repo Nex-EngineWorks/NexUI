@@ -164,8 +164,8 @@ namespace emiteat.NexUI.MotionGraph
     /// Races "Body" against a <c>Duration</c>-second timer. If Body finishes first, continues to
     /// "Completed"; if the timer wins, cancels Body (via a token linked to, not replacing, the
     /// caller's own) and continues to "TimedOut". Note: the losing side's task is not re-awaited
-    /// after the race resolves, so a cancellation it raises afterward surfaces only as UniTask's
-    /// unobserved-exception logging, not a thrown exception here - a known, accepted trade-off of
+    /// after the race resolves, so a cancellation it raises afterward surfaces only as the
+    /// runtime's unobserved-task logging, not a thrown exception here - a known, accepted trade-off of
     /// the race pattern rather than a bug in this node specifically.
     /// </summary>
     public sealed class TimeoutNodeExecutor : IUIGraphNodeExecutor

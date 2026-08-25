@@ -47,6 +47,13 @@ namespace emiteat.NexUI.Integrations.UGUI
             Add<IUITransformCapability>(new UguiTransform(_go, rect, canvasGroup));
             if (rect != null) Add<IUISizeCapability>(new UguiSize(rect));
 
+            var gestures = _go.GetComponent<UGUIGestureRelay>();
+            if (gestures != null)
+            {
+                Add<IUIPointerCapability>(gestures);
+                Add<IUIFocusCapability>(gestures);
+            }
+
             var button = _go.GetComponent<Button>();
             if (button != null)
             {

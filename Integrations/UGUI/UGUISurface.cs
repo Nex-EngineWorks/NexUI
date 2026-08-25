@@ -11,11 +11,14 @@ namespace emiteat.NexUI.Integrations.UGUI
     /// </summary>
     public sealed class UGUISurface : IUISurface
     {
+        private const string InputBlockerName = "NexUIInputBlocker";
+
         private readonly GameObject _root;
         private readonly Dictionary<string, IUIElementHandle> _handleCache =
             new Dictionary<string, IUIElementHandle>();
         private readonly Dictionary<string, GameObject> _tagged =
             new Dictionary<string, GameObject>();
+        private Image _inputBlocker;
 
         public string ScreenId { get; }
         public UIRenderBackend Backend => UIRenderBackend.UGUI;
@@ -107,16 +110,48 @@ namespace emiteat.NexUI.Integrations.UGUI
         {
             var group = _root.GetComponent<CanvasGroup>();
             if (group == null) group = _root.AddComponent<CanvasGroup>();
-            group.blocksRaycasts = blocking;
+            // CanvasGroup.blocksRaycasts applies to every descendant, so setting it false here
+            // made non-blocking screens fully click-through. The root stays raycast-permeable;
+            // a dedicated transparent blocker image behind the content swallows rays instead.
+            group.blocksRaycasts = true;
             group.interactable = true;
+            EnsureInputBlocker().raycastTarget = blocking;
+        }
+
+        private Image EnsureInputBlocker()
+        {
+            if (_inputBlocker != null) return _inputBlocker;
+
+            var blockerTransform = _root.transform.Find(InputBlockerName);
+            GameObject blockerGo = blockerTransform != null ? blockerTransform.gameObject : null;
+            if (blockerGo == null)
+            {
+                blockerGo = new GameObject(InputBlockerName, typeof(RectTransform));
+                var rect = (RectTransform)blockerGo.transform;
+                rect.anchorMin = Vector2.zero;
+                rect.anchorMax = Vector2.one;
+                rect.offsetMin = Vector2.zero;
+                rect.offsetMax = Vector2.zero;
+                rect.transform.SetParent(_root.transform, false);
+                rect.transform.SetAsFirstSibling();
+            }
+
+            var image = blockerGo.GetComponent<Image>();
+            if (image == null) image = blockerGo.AddComponent<Image>();
+            image.color = new Color(0f, 0f, 0f, 0f);
+            _inputBlocker = image;
+            return image;
         }
 
         public void Destroy()
         {
             _handleCache.Clear();
             _tagged.Clear();
-            if (_root != null)
-                Object.Destroy(_root);
+            if (_root == null) return;
+            // Edit mode requires DestroyImmediate; deferred Destroy is play-mode only. Matches
+            // NexScreenRuntime so compiled screens behave identically through both paths.
+            if (Application.isPlaying) Object.Destroy(_root);
+            else Object.DestroyImmediate(_root);
         }
 
         private static Transform FindChildByName(Transform parent, string name)

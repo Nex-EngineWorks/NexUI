@@ -7,47 +7,6 @@ using UnityEngine.UI;
 namespace emiteat.NexUI.Integrations.UGUI
 {
     /// <summary>
-    /// Reads and writes a built control's value without the caller knowing which control it is.
-    /// </summary>
-    /// <remarks>
-    /// One handle for slider, scrollbar, toggle and dropdown is what keeps the binding code to a
-    /// single path. The compiled program already says "this holds a number" via
-    /// <see cref="NexNodeCapabilities.Value"/>; which uGUI type provides it is this file's problem
-    /// and nobody else's.
-    /// </remarks>
-    public interface INexValueHandle
-    {
-        float Value { get; set; }
-
-        /// <summary>Raised when the user changed it - never when a binding wrote it.</summary>
-        event Action<float> UserChanged;
-
-        void Dispose();
-    }
-
-    /// <summary>
-    /// Reads and writes a control whose value is text rather than a number.
-    /// </summary>
-    /// <remarks>
-    /// Separate from <see cref="INexValueHandle"/> rather than widening it. An input field's value
-    /// is a string, and squeezing it through a float would lose it entirely - the two are different
-    /// kinds of binding, not two shapes of one.
-    ///
-    /// This is what makes a text binding two-way. Without it a bound input field could be filled
-    /// from state but whatever the user typed went nowhere, which is the half that makes the
-    /// control worth having.
-    /// </remarks>
-    public interface INexTextHandle
-    {
-        string Text { get; set; }
-
-        /// <summary>Raised when the user changed it - never when a binding wrote it.</summary>
-        event Action<string> UserChanged;
-
-        void Dispose();
-    }
-
-    /// <summary>
     /// Attaches the control a compiled node asks for, and hands back a way to read its value.
     /// </summary>
     /// <remarks>
@@ -118,6 +77,12 @@ namespace emiteat.NexUI.Integrations.UGUI
                 {
                     var fill = NewChild(target, "Fill", new Color(0.25f, 0.55f, 0.95f));
                     var handleRect = NewChild(target, "Handle", Color.white);
+
+                    // Tagged with the authoring part ids so a nudge the author made in Studio can
+                    // find them here. The registry's paths name Unity's stock slider, which this
+                    // control deliberately is not.
+                    NexPartTag.Mark(fill, "fill");
+                    NexPartTag.Mark(handleRect, "handle");
 
                     slider = target.AddComponent<Slider>();
                     slider.fillRect = fill;
@@ -336,6 +301,8 @@ namespace emiteat.NexUI.Integrations.UGUI
                 captionRect.offsetMin = new Vector2(8f, 2f);
                 captionRect.offsetMax = new Vector2(-20f, -2f);
 
+                NexPartTag.Mark(captionRect, "label");
+
                 var caption = captionGo.AddComponent<TextMeshProUGUI>();
                 caption.fontSize = 14f;
                 caption.color = Color.black;
@@ -372,6 +339,7 @@ namespace emiteat.NexUI.Integrations.UGUI
                 template.anchoredPosition = Vector2.zero;
                 template.sizeDelta = new Vector2(0f, 120f);
                 templateGo.GetComponent<Image>().color = Color.white;
+                NexPartTag.Mark(template, "template");
 
                 var viewport = NewChild(templateGo, "Viewport");
                 viewport.gameObject.AddComponent<Image>().color = new Color(1f, 1f, 1f, 0.01f);
@@ -645,6 +613,8 @@ namespace emiteat.NexUI.Integrations.UGUI
                 var textRect = (RectTransform)textGo.transform;
                 textRect.SetParent(viewport, worldPositionStays: false);
                 Stretch(textRect);
+
+                NexPartTag.Mark(textRect, "text");
 
                 var text = textGo.AddComponent<TextMeshProUGUI>();
                 text.fontSize = 14f;

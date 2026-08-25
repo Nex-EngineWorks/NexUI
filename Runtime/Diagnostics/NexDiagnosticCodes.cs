@@ -32,6 +32,17 @@ namespace emiteat.NexUI.Diagnostics
         public const string UnknownElementType = "NEX-CMP-3002";
         public const string BackendUnsupportedNode = "NEX-CMP-3003";
         public const string NoDocument = "NEX-CMP-3004";
+        public const string AppearanceNotCarried = "NEX-CMP-3005";
+        public const string FragmentDefinitionMissing = "NEX-CMP-3006";
+        public const string FragmentIncompatible = "NEX-CMP-3007";
+        public const string FragmentShadowsAuthoredProperty = "NEX-CMP-3008";
+        public const string BlockExpansionFailed = "NEX-CMP-3009";
+        public const string BlockExpansionIncomplete = "NEX-CMP-3010";
+        public const string BlockExpansionNote = "NEX-CMP-3011";
+        public const string StateOverrideNotCarried = "NEX-CMP-3012";
+        public const string ResponsiveOverrideNotCarried = "NEX-CMP-3013";
+        public const string LocalizationKeyConflict = "NEX-CMP-3014";
+        public const string PartOverrideNotCarried = "NEX-CMP-3015";
 
         // ---- BND: binding ---------------------------------------------------
         public const string CommandOnNonClickableNode = "NEX-BND-4001";
@@ -50,6 +61,11 @@ namespace emiteat.NexUI.Diagnostics
         public const string CommandHandlerThrew = "NEX-RT-6002";
         public const string ProgramSchemaMismatch = "NEX-RT-6003";
         public const string InteractionPortMissing = "NEX-RT-6004";
+        public const string LayoutFeatureUnsupported = "NEX-RT-6005";
+        public const string AppearanceFeatureUnsupported = "NEX-RT-6006";
+        public const string FeatureCarriedNotApplied = "NEX-RT-6007";
+        public const string StateChannelUnsupported = "NEX-RT-6008";
+        public const string PartNotBuilt = "NEX-RT-6009";
 
         // ---- ACC: accessibility ---------------------------------------------
         public const string InteractiveNodeHasNoAccessibleName = "NEX-ACC-7001";
@@ -195,6 +211,97 @@ namespace emiteat.NexUI.Diagnostics
             new Entry(InteractionPortMissing, NexSeverity.Error,
                 "An interaction action needs a runtime service that was not supplied.",
                 "Pass the state store / screen surface when building the screen; the rest of the rule still ran."),
+
+            new Entry(BlockExpansionFailed, NexSeverity.Error,
+                "A Block instance could not be expanded, so its content is missing from the screen.",
+                "The message names the cause - a missing definition, a reference cycle, an empty " +
+                "definition, or an expansion budget. Fix it and recompile; the screen compiled " +
+                "without that Block's elements."),
+
+            new Entry(BlockExpansionIncomplete, NexSeverity.Warning,
+                "A Block instance expanded, but part of what it declares was not applied.",
+                "Usually a slot rule or an override that no longer matches the definition. The " +
+                "message names which; the rest of the Block is present."),
+
+            new Entry(BlockExpansionNote, NexSeverity.Suggestion,
+                "A Block instance expanded with a detail worth knowing.",
+                "Either its definition was recovered by id after its GUID stopped resolving - " +
+                "re-save the screen to write the new GUID back - or a variant rule needed canvas " +
+                "context a headless compile does not have."),
+
+            new Entry(FragmentDefinitionMissing, NexSeverity.Error,
+                "An element composes a Fragment whose definition asset could not be found.",
+                "Restore the Fragment asset, or remove the Fragment from the element. Its " +
+                "properties were not applied, so the element compiled without them."),
+
+            new Entry(FragmentIncompatible, NexSeverity.Warning,
+                "A Fragment was composed onto an element type it does not declare as compatible.",
+                "It was applied anyway. Either add the element type to the Fragment's compatible " +
+                "list, or use a Fragment intended for this element."),
+
+            new Entry(FragmentShadowsAuthoredProperty, NexSeverity.Suggestion,
+                "A Fragment sets a property that is also set directly on the element.",
+                "The Fragment wins, because the stack composes on top of the element. Remove one " +
+                "of the two so the value has a single source."),
+
+            new Entry(StateOverrideNotCarried, NexSeverity.Warning,
+                "A state changes something the compiled program cannot carry.",
+                "Either the target element no longer exists, or the override sets an asset " +
+                "reference - the content hash deliberately excludes asset identity. The rest of " +
+                "the state compiled; the message names which override was dropped."),
+
+            new Entry(ResponsiveOverrideNotCarried, NexSeverity.Warning,
+                "A responsive rule could not be compiled, or one of its overrides could not.",
+                "Either the rule can never match (a maximum resolution below its minimum, or a " +
+                "duplicate id), or the override names a missing element or sets an asset " +
+                "reference. The message names which; the rest of the rule compiled."),
+
+            new Entry(LocalizationKeyConflict, NexSeverity.Warning,
+                "An element is linked to two different localization keys.",
+                "The key can be set on the element itself or in the screen's link table. The " +
+                "element's own key wins; remove the other so the value has a single source - the " +
+                "losing one still shows in the inspector and looks like it is doing something."),
+
+            new Entry(PartOverrideNotCarried, NexSeverity.Warning,
+                "A nudge to a control's internal part was not compiled.",
+                "Either the element type has no part by that name, or the part is preview-only - "
+                + "the canvas draws it but no backend builds an object for it. The authoring value "
+                + "is preserved; the message names which case."),
+
+            new Entry(PartNotBuilt, NexSeverity.Warning,
+                "A compiled part nudge found no such part on the built control.",
+                "The compiled uGUI builder assembles a leaner control than the prefab writer and "
+                + "does not create every part the registry describes. The nudge is in the program "
+                + "and applies as soon as the builder makes that part."),
+
+            new Entry(StateChannelUnsupported, NexSeverity.Warning,
+                "A state changes a property this backend did not apply.",
+                "Either the backend does not handle that property, or the target node has no " +
+                "component that carries it. The value is in the compiled program and the state's other properties were " +
+                "applied. Reported once per property per screen rather than once per node, so a " +
+                "grid of slots does not bury the message."),
+
+            new Entry(AppearanceNotCarried, NexSeverity.Warning,
+                "An appearance effect was authored that the compiled program cannot carry.",
+                "Material and gradient are asset references, and the content hash deliberately " +
+                "excludes asset identity. Bake the look into a sprite, or apply the material at " +
+                "runtime through a component."),
+
+            new Entry(FeatureCarriedNotApplied, NexSeverity.Suggestion,
+                "The compiled screen carries an authored feature this backend does not act on.",
+                "Not an error and not data loss - the feature is in the program and will work once " +
+                "the backend supports it. Reported once per feature per screen so the reason a " +
+                "setting appears to do nothing is written down somewhere."),
+
+            new Entry(AppearanceFeatureUnsupported, NexSeverity.Warning,
+                "The authored appearance uses an effect this backend cannot draw.",
+                "The rest of the appearance was applied. The message names the effect and the " +
+                "closest thing the backend can do instead."),
+
+            new Entry(LayoutFeatureUnsupported, NexSeverity.Warning,
+                "The authored layout uses something this backend cannot express.",
+                "The rest of the layout was applied. Either accept the difference, or author the " +
+                "screen within what the target backend supports - the message names the feature."),
 
             new Entry(ProgramSchemaMismatch, NexSeverity.Error,
                 "The compiled screen was produced by a different compiler version.",

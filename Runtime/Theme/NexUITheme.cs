@@ -18,6 +18,7 @@ namespace emiteat.NexUI.Theme
         {
             NexUIThemeAPI.SetActiveTheme(themeId);
             ThemeEvents.RaiseThemeChanged(themeId);
+            RefreshOpenSurfaces();
         }
 
         /// <summary>
@@ -34,6 +35,20 @@ namespace emiteat.NexUI.Theme
         {
             NexUIThemeAPI.Overrides.Set(tokenKey, value);
             ThemeEvents.RaiseTokenChanged(tokenKey, value);
+            RefreshOpenSurfaces();
+        }
+
+        /// <summary>
+        /// Re-applies the active theme (with overrides) to every open screen. Without this, switching
+        /// themes only affected screens opened afterwards and running UI kept the old look.
+        /// </summary>
+        private static void RefreshOpenSurfaces()
+        {
+            foreach (var surface in Abstractions.UIOpenSurfaceRegistry.Collect())
+            {
+                try { NexUIThemeAPI.ApplyTo(surface.RootHandle); }
+                catch (System.Exception ex) { UnityEngine.Debug.LogException(ex); }
+            }
         }
 
         public static string GetToken(string tokenKey) => NexUIThemeAPI.ResolveToken(tokenKey);

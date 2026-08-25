@@ -9,8 +9,7 @@
         "emiteat.NexUI.Theme",
         "emiteat.NexUI.Components",
         "emiteat.NexUI.Settings",
-        "emiteat.NexUI.Integrations.UGUI",
-        "UniTask"
+        "emiteat.NexUI.Integrations.UGUI"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

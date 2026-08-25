@@ -11,6 +11,13 @@ namespace emiteat.NexUI.Core
     /// </summary>
     public sealed class UIPolicyRunner
     {
+        /// <summary>
+        /// Time scale used while any <see cref="UITimePolicy.SlowWhileOpen"/> screen is open.
+        /// Configurable because 0.25 is a taste, not physics - cinematic slow-mo often wants
+        /// something else.
+        /// </summary>
+        public static float SlowWhileOpenScale = 0.25f;
+
         private readonly Dictionary<string, UITimePolicy> _timePolicies = new Dictionary<string, UITimePolicy>();
         private readonly Dictionary<string, CursorPolicy> _cursorPolicies = new Dictionary<string, CursorPolicy>();
         private readonly List<string> _cursorOrder = new List<string>();
@@ -25,6 +32,9 @@ namespace emiteat.NexUI.Core
             var timePolicy = p.pauseGameBehind ? UITimePolicy.PauseWhileOpen : p.timePolicy;
             if (timePolicy != UITimePolicy.Unchanged)
             {
+                // Capture only on the 0→1 transition: the runner owns Time.timeScale while any
+                // policy is active, so the value it restores is whatever the game had before the
+                // FIRST policy engaged - not what some intermediate screen state wrote.
                 if (_timePolicies.Count == 0)
                     _cachedTimeScale = UnityTime.timeScale;
                 _timePolicies[instance.ScreenId] = timePolicy;
@@ -56,7 +66,7 @@ namespace emiteat.NexUI.Core
                     UnityTime.timeScale = 0f;
                     return;
                 }
-            UnityTime.timeScale = _cachedTimeScale * 0.25f;
+            UnityTime.timeScale = _cachedTimeScale * SlowWhileOpenScale;
         }
 
         private void ApplyCursor(string screenId, CursorPolicy policy)

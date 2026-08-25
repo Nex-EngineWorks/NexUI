@@ -10,8 +10,7 @@
         "emiteat.NexUI.Flow",
         "emiteat.NexUI.Diagnostics",
         "emiteat.NexUI.Time",
-        "emiteat.NexUI.Accessibility",
-        "UniTask"
+        "emiteat.NexUI.Accessibility"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

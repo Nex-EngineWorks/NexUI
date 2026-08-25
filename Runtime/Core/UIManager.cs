@@ -30,6 +30,14 @@ namespace emiteat.NexUI.Core
         private readonly UIModalStack _modalStack = new UIModalStack();
         private readonly UIToastQueue _toastQueue = new UIToastQueue();
 
+        /// <summary>Last result each closed screen handed back via <see cref="UICloseArgs.result"/>.</summary>
+        private readonly Dictionary<string, object> _closeResults =
+            new Dictionary<string, object>();
+
+        /// <summary>Waiters registered by <see cref="WaitForCloseAsync"/>, keyed by screen id.</summary>
+        private readonly Dictionary<string, List<TaskCompletionSource<object>>> _closeWaiters =
+            new Dictionary<string, List<TaskCompletionSource<object>>>();
+
         private readonly Dictionary<UIRenderBackend, IUIScreenFactory> _factories =
             new Dictionary<UIRenderBackend, IUIScreenFactory>();
         private readonly Dictionary<string, UIScreenInstance> _open =
@@ -45,6 +53,34 @@ namespace emiteat.NexUI.Core
         private readonly Dictionary<UIRenderBackend, UIScreenPropertyOverrideApplier> _overrideAppliers =
             new Dictionary<UIRenderBackend, UIScreenPropertyOverrideApplier>();
 
+        /// <summary>
+        /// Every live manager registers itself once, so theme changes can find open surfaces without
+        /// Core referencing the Theme module. Instances remove themselves in <see cref="Shutdown"/>.
+        /// </summary>
+        private static readonly List<UIManager> _liveManagers = new List<UIManager>();
+
+        static UIManager()
+        {
+            Abstractions.UIOpenSurfaceRegistry.RegisterProvider(CollectLiveSurfaces);
+        }
+
+        private static IEnumerable<Abstractions.IUISurface> CollectLiveSurfaces()
+        {
+            // Snapshot: Shutdown during enumeration must not mutate the walked list.
+            for (var i = 0; i < _liveManagers.Count; i++)
+            {
+                var manager = _liveManagers[i];
+                if (manager == null) continue;
+                foreach (var instance in manager.OpenScreens)
+                    if (instance?.Surface != null) yield return instance.Surface;
+            }
+        }
+
+        public UIManager()
+        {
+            _liveManagers.Add(this);
+        }
+
         private sealed class TransitionHandle
         {
             public readonly CancellationTokenSource Cancellation;
@@ -58,6 +94,18 @@ namespace emiteat.NexUI.Core
                 Cancellation =
                     CancellationTokenSource.CreateLinkedTokenSource(
                         lifetimeToken);
+            }
+
+            /// <summary>
+            /// Links the caller's token in as well, so cancelling OpenAsync/CloseAsync rolls the
+            /// operation back. Disposing the linked source also releases the registration on the
+            /// caller's token.
+            /// </summary>
+            public TransitionHandle(CancellationToken lifetimeToken, CancellationToken externalToken)
+            {
+                Cancellation =
+                    CancellationTokenSource.CreateLinkedTokenSource(
+                        lifetimeToken, externalToken);
             }
         }
 
@@ -102,6 +150,9 @@ namespace emiteat.NexUI.Core
 
         public void RegisterScreen(UIScreenDefinition definition) => _registry.Register(definition);
 
+        /// <summary>Removes a registration; open instances are unaffected.</summary>
+        public void UnregisterScreen(string screenId) => _registry.Unregister(screenId);
+
         public void RegisterFactory(IUIScreenFactory factory)
         {
             if (factory == null) return;
@@ -111,6 +162,9 @@ namespace emiteat.NexUI.Core
         public void RegisterFocusAdapter(IUIFocusAdapter adapter) => _focus.RegisterAdapter(adapter);
 
         public void RegisterLayer(IUILayerRoot layerRoot) => _layers.RegisterLayer(layerRoot);
+
+        /// <summary>Removes a previously registered layer root (e.g. when its bootstrap is destroyed).</summary>
+        public void UnregisterLayer(IUILayerRoot layerRoot) => _layers.UnregisterLayer(layerRoot);
 
         public void RegisterInputPolicy(IInputPolicy policy)
         {
@@ -143,7 +197,17 @@ namespace emiteat.NexUI.Core
         }
 
         /// <summary>Creates one inactive surface now so its first OpenAsync does not instantiate.</summary>
-        public async Task PreloadAsync(string screenId)
+        public Task PreloadAsync(string screenId)
+            => PreloadInternalAsync(screenId, CancellationToken.None);
+
+        /// <summary>
+        /// Creates one inactive surface now so its first OpenAsync does not instantiate.
+        /// Cancelling <paramref name="cancellationToken"/> rolls the preload back.
+        /// </summary>
+        public Task PreloadAsync(string screenId, CancellationToken cancellationToken)
+            => PreloadInternalAsync(screenId, cancellationToken);
+
+        private async Task PreloadInternalAsync(string screenId, CancellationToken cancellationToken)
         {
             if (!_registry.TryGet(screenId, out var def))
             {
@@ -151,8 +215,12 @@ namespace emiteat.NexUI.Core
                 return;
             }
 
-            var transition = await BeginTransitionAsync(screenId, def.policy.conflictPolicy);
-            if (transition == null) return;
+            var transition = await BeginTransitionAsync(screenId, def.policy.conflictPolicy, cancellationToken);
+            if (transition == null)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                return;
+            }
             IUISurface surface = null;
             try
             {
@@ -169,6 +237,11 @@ namespace emiteat.NexUI.Core
                 surface.SetActive(false);
                 _retained[screenId] = new UIScreenInstance(def, surface) { State = UIScreenState.Closed };
                 surface = null;
+            }
+            catch (System.OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                SafeDestroySurface(screenId, surface);
+                throw;
             }
             catch (System.OperationCanceledException)
             {
@@ -188,11 +261,16 @@ namespace emiteat.NexUI.Core
 
         // ---- Open -----------------------------------------------------------
 
-        public Task OpenAsync(string screenId, UIOpenArgs args = default)
-            => OpenInternalAsync(screenId, args, false, new HashSet<string>());
+        public Task OpenAsync(string screenId, UIOpenArgs args = default,
+            CancellationToken cancellationToken = default)
+        {
+            if (!string.IsNullOrEmpty(args.variantId) || args.payload != null)
+                _lastArgsByScreen[screenId] = args;
+            return OpenInternalAsync(screenId, args, false, new HashSet<string>(), cancellationToken);
+        }
 
         private async Task OpenInternalAsync(string screenId, UIOpenArgs args, bool fromToastQueue,
-            HashSet<string> relationChain)
+            HashSet<string> relationChain, CancellationToken cancellationToken = default)
         {
             relationChain ??= new HashSet<string>();
             if (!relationChain.Add(screenId)) return;
@@ -220,8 +298,19 @@ namespace emiteat.NexUI.Core
                 ownsToastSlot = _toastQueue.ActiveScreenId == screenId;
             }
 
-            var transition = await BeginTransitionAsync(screenId, def.policy.conflictPolicy);
-            if (transition == null) return;
+            var transition = await BeginTransitionAsync(screenId, def.policy.conflictPolicy, cancellationToken);
+            if (transition == null)
+            {
+                // Conflict policy dropped this request. Release the toast slot, otherwise the
+                // queue keeps ActiveScreenId set forever and DrainToastQueueAsync never fires.
+                if (ownsToastSlot)
+                {
+                    _toastQueue.MarkFinished(screenId);
+                    await DrainToastQueueAsync();
+                }
+                cancellationToken.ThrowIfCancellationRequested();
+                return;
+            }
 
             IUISurface surface = null;
             UIScreenInstance instance = null;
@@ -230,6 +319,7 @@ namespace emiteat.NexUI.Core
             var focusTrapped = false;
             var opened = false;
             var newlyOpened = false;
+            var fromRetained = false;
             try
             {
                 // Screen ids are unique manager keys. Additive means coexistence with other
@@ -247,6 +337,7 @@ namespace emiteat.NexUI.Core
                 {
                     _retained.Remove(screenId);
                     surface = instance.Surface;
+                    fromRetained = true;
                 }
                 else
                 {
@@ -263,10 +354,13 @@ namespace emiteat.NexUI.Core
                 }
 
                 // Prevent a newly-created surface flashing above the old layer contents while a
-                // ReplaceLayer close transition runs.
+                // ReplaceLayer close transition runs. Sibling closes START here (so their exit
+                // motion overlaps this screen's open motion = crossfade) and are awaited just
+                // before the open finishes, so state settles deterministically.
                 surface.SetActive(false);
+                Task closingSiblings = null;
                 if (openPolicy == UIOpenPolicy.ReplaceLayer)
-                    await CloseLayerExceptAsync(def.layer.layerType, screenId);
+                    closingSiblings = CloseLayerExceptAsync(def.layer.layerType, screenId, immediate: false);
                 token.ThrowIfCancellationRequested();
 
                 if (def.relations.closes != null)
@@ -319,6 +413,18 @@ namespace emiteat.NexUI.Core
                     await PlayMotionAsync(surface, def.motion.openMotion, token);
                 token.ThrowIfCancellationRequested();
 
+                // The crossfade handoff: sibling exits ran alongside our open motion. Wait them
+                // out so the layer reaches a settled state before OnAfterOpen fires.
+                if (closingSiblings != null)
+                {
+                    try { await closingSiblings; }
+                    catch (System.Exception ex)
+                    {
+                        Debug.LogWarning($"[NexUI] ReplaceLayer sibling close failed: {ex}");
+                    }
+                }
+                token.ThrowIfCancellationRequested();
+
                 instance.State = UIScreenState.Open;
 
                 if (instance.Lifecycle != null)
@@ -329,12 +435,15 @@ namespace emiteat.NexUI.Core
             }
             catch (System.OperationCanceledException)
             {
-                RollbackOpen(screenId, instance, surface, policyApplied, appliedInputPolicies, focusTrapped);
+                RollbackOpen(screenId, instance, surface, policyApplied, appliedInputPolicies, focusTrapped, fromRetained);
+                // A conflict-policy Cancel also lands here; only the caller's own token turns into
+                // an observable cancelled task.
+                cancellationToken.ThrowIfCancellationRequested();
             }
             catch (System.Exception ex)
             {
                 Debug.LogError($"[NexUI] OpenAsync('{screenId}') threw during open - rolling back so the rest of the UI stack keeps working: {ex}");
-                RollbackOpen(screenId, instance, surface, policyApplied, appliedInputPolicies, focusTrapped);
+                RollbackOpen(screenId, instance, surface, policyApplied, appliedInputPolicies, focusTrapped, fromRetained);
                 RaiseScreenFaulted(screenId, ex);
             }
             finally
@@ -362,7 +471,12 @@ namespace emiteat.NexUI.Core
 
         // ---- Close ----------------------------------------------------------
 
-        public async Task CloseAsync(string screenId, UICloseArgs args = default)
+        public Task CloseAsync(string screenId, UICloseArgs args = default,
+            CancellationToken cancellationToken = default)
+            => CloseInternalAsync(screenId, args, cancellationToken);
+
+        private async Task CloseInternalAsync(string screenId, UICloseArgs args,
+            CancellationToken cancellationToken)
         {
             if (!_registry.TryGet(screenId, out var registeredDef) && !_open.ContainsKey(screenId))
                 return;
@@ -370,8 +484,12 @@ namespace emiteat.NexUI.Core
             var conflictPolicy = _open.TryGetValue(screenId, out var current)
                 ? current.Definition.policy.conflictPolicy
                 : registeredDef.policy.conflictPolicy;
-            var transition = await BeginTransitionAsync(screenId, conflictPolicy);
-            if (transition == null) return;
+            var transition = await BeginTransitionAsync(screenId, conflictPolicy, cancellationToken);
+            if (transition == null)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                return;
+            }
 
             UIScreenInstance instance = null;
             UIScreenDefinition def = null;
@@ -457,11 +575,92 @@ namespace emiteat.NexUI.Core
                 EndTransition(screenId, transition);
             }
 
-            if (instance != null) RaiseScreenClosed(instance);
+            if (instance != null)
+            {
+                CompleteCloseWaiters(screenId, args.result);
+                RaiseScreenClosed(instance);
+            }
             if (wasToast)
             {
                 _toastQueue.MarkFinished(screenId);
                 await DrainToastQueueAsync();
+            }
+        }
+
+        // ---- Bulk close -----------------------------------------------------
+
+        /// <summary>Closes every open screen. Snapshot-first, so closing does not walk a mutating set.</summary>
+        public Task CloseAllAsync(UICloseArgs args = default, CancellationToken cancellationToken = default)
+            => CloseManyAsync(_open.Keys.ToArray(), args, cancellationToken);
+
+        /// <summary>Closes every open screen on one layer - "return to lobby", "close all popups".</summary>
+        public Task CloseLayerAsync(UILayerType layer, UICloseArgs args = default, CancellationToken cancellationToken = default)
+        {
+            List<string> ids = null;
+            foreach (var pair in _open)
+            {
+                if (pair.Value.Layer != layer) continue;
+                ids ??= new List<string>();
+                ids.Add(pair.Key);
+            }
+            return ids == null ? Task.CompletedTask : CloseManyAsync(ids, args, cancellationToken);
+        }
+
+        private async Task CloseManyAsync(IReadOnlyList<string> screenIds, UICloseArgs args, CancellationToken ct)
+        {
+            for (int i = 0; i < screenIds.Count; i++)
+            {
+                if (!_open.ContainsKey(screenIds[i])) continue;   // closed by an earlier relation
+                await CloseAsync(screenIds[i], args, ct);
+            }
+        }
+
+        // ---- Close result waiting -------------------------------------------
+
+        /// <summary>
+        /// Completes when the named screen next closes, handing back the <see cref="UICloseArgs.result"/>
+        /// its closer supplied. The request/response half of dialog navigation:
+        /// <c>var picked = await ui.WaitForCloseAsync("ItemPicker");</c>
+        ///
+        /// Calling this for an ALREADY closed screen completes immediately with that screen's last
+        /// recorded result (or null), so fire-and-forget opens followed by an await never deadlock.
+        /// </summary>
+        public Task<object> WaitForCloseAsync(string screenId, CancellationToken cancellationToken = default)
+        {
+            if (string.IsNullOrEmpty(screenId)) return Task.FromResult<object>(null);
+            if (!_open.ContainsKey(screenId))
+                return Task.FromResult<object>(
+                    _closeResults.TryGetValue(screenId, out var last) ? last : null);
+
+            var tcs = new TaskCompletionSource<object>(TaskCreationOptions.RunContinuationsAsynchronously);
+            if (!_closeWaiters.TryGetValue(screenId, out var list))
+            {
+                list = new List<TaskCompletionSource<object>>();
+                _closeWaiters[screenId] = list;
+            }
+            list.Add(tcs);
+
+            if (!cancellationToken.CanBeCanceled) return tcs.Task;
+
+            var reg = cancellationToken.Register(() =>
+            {
+                if (list.Remove(tcs)) tcs.TrySetCanceled(cancellationToken);
+            });
+            return tcs.Task.ContinueWith(t =>
+            {
+                reg.Dispose();
+                return t;
+            }).Unwrap();
+        }
+
+        private void CompleteCloseWaiters(string screenId, object result)
+        {
+            _closeResults[screenId] = result;
+            if (_closeWaiters.TryGetValue(screenId, out var waiters))
+            {
+                _closeWaiters.Remove(screenId);
+                foreach (var waiter in waiters)
+                    waiter.TrySetResult(result);
             }
         }
 
@@ -470,14 +669,22 @@ namespace emiteat.NexUI.Core
         public Task ToggleAsync(string screenId)
             => IsOpen(screenId) ? CloseAsync(screenId) : OpenAsync(screenId);
 
-        public async Task BackAsync()
+        /// <summary>Pops the back stack and closes the screen it lands on.</summary>
+        public Task BackAsync() => BackAsync<object>(null);
+
+        /// <summary>
+        /// Pops the back stack and closes the screen it lands on, handing <paramref name="result"/>
+        /// to anyone awaiting <see cref="WaitForCloseAsync"/> - the back gesture can carry a result
+        /// just like an explicit close.
+        /// </summary>
+        public async Task BackAsync<TResult>(TResult result)
         {
             while (_backStack.TryPop(out var screenId))
             {
                 if (_open.TryGetValue(screenId, out var stacked) &&
                     (stacked.Definition.policy.closeOnBack || stacked.Definition.layer.openPolicy == UIOpenPolicy.StackPush))
                 {
-                    await CloseAsync(screenId);
+                    await CloseAsync(screenId, new UICloseArgs { result = result });
                     return;
                 }
             }
@@ -485,20 +692,91 @@ namespace emiteat.NexUI.Core
             // Fallback: close the top-most modal if any.
             if (_modalStack.TryGetTop(out var modalId) && _open.TryGetValue(modalId, out var modal) &&
                 modal.Definition.policy.closeOnBack)
-                await CloseAsync(modalId);
+                await CloseAsync(modalId, new UICloseArgs { result = result });
         }
+
+        /// <summary>
+        /// Closes every open screen EXCEPT <paramref name="keepScreenId"/> - "focus mode" for one
+        /// panel across all layers. The kept screen stays exactly as it is.
+        /// </summary>
+        public Task CloseOthersAsync(string keepScreenId, UICloseArgs args = default,
+            CancellationToken cancellationToken = default)
+        {
+            List<string> ids = null;
+            foreach (var pair in _open)
+            {
+                if (pair.Key == keepScreenId) continue;
+                ids ??= new List<string>();
+                ids.Add(pair.Key);
+            }
+            return ids == null ? Task.CompletedTask : CloseManyAsync(ids, args, cancellationToken);
+        }
+
+        // ---- Stack snapshot / restore ---------------------------------------
+
+        /// <summary>
+        /// Captures every open screen (bottom ??top by layer, then id) with the open args it was
+        /// last given. Pair with <see cref="RestoreStackAsync"/> for "quit and continue later".
+        /// </summary>
+        public UIScreenStackSnapshot CaptureStackSnapshot()
+        {
+            var snapshot = new UIScreenStackSnapshot();
+            var ordered = new List<UIScreenInstance>(_open.Values);
+            ordered.Sort((a, b) =>
+            {
+                var layer = ((int)a.Layer).CompareTo((int)b.Layer);
+                return layer != 0 ? layer : string.CompareOrdinal(a.ScreenId, b.ScreenId);
+            });
+            foreach (var inst in ordered)
+            {
+                if (inst == null) continue;
+                snapshot.Entries.Add(new UIScreenStackSnapshot.Entry
+                {
+                    ScreenId = inst.ScreenId,
+                    Args = _lastArgsByScreen.TryGetValue(inst.ScreenId, out var args) ? args : default
+                });
+            }
+            return snapshot;
+        }
+
+        /// <summary>Reopens the captured set: closes everything first, then opens in capture order.</summary>
+        public async Task RestoreStackAsync(UIScreenStackSnapshot snapshot,
+            CancellationToken cancellationToken = default)
+        {
+            if (snapshot == null) return;
+            await CloseAllAsync(new UICloseArgs { suppressMotion = true }, cancellationToken);
+
+            foreach (var entry in snapshot.Entries)
+            {
+                if (!_registry.Contains(entry.ScreenId))
+                {
+                    Debug.LogWarning($"[NexUI] RestoreStack: screen '{entry.ScreenId}' is no longer registered; skipped.");
+                    continue;
+                }
+                await OpenAsync(entry.ScreenId, entry.Args, cancellationToken);
+            }
+        }
+
+
+        private readonly Dictionary<string, UIOpenArgs> _lastArgsByScreen =
+            new Dictionary<string, UIOpenArgs>();
 
         // ---- Internals ------------------------------------------------------
 
-        private async Task CloseLayerExceptAsync(UILayerType layer, string keepScreenId)
+        private async Task CloseLayerExceptAsync(UILayerType layer, string keepScreenId, bool immediate)
         {
-            var toClose = _open.Values
-                .Where(i => i.Layer == layer && i.ScreenId != keepScreenId)
-                .Select(i => i.ScreenId)
-                .ToList();
+            // Allocation-light: a plain pass instead of LINQ on every ReplaceLayer open.
+            List<string> toClose = null;
+            foreach (var pair in _open)
+            {
+                if (pair.Value.Layer != layer || pair.Key == keepScreenId) continue;
+                toClose ??= new List<string>();
+                toClose.Add(pair.Key);
+            }
+            if (toClose == null) return;
 
             foreach (var id in toClose)
-                await CloseAsync(id, new UICloseArgs { immediate = true });
+                await CloseAsync(id, new UICloseArgs { immediate = immediate });
         }
 
         private async Task DrainToastQueueAsync()
@@ -534,6 +812,7 @@ namespace emiteat.NexUI.Core
                     $"Screen '{definition.ScreenId}' uses Addressable loading but has no resourceKey.");
 
             UIScreenDefinition runtimeDefinition = null;
+            var ownsLoad = false;
             try
             {
                 var asset = await ResourceProvider.LoadAssetAsync<UnityEngine.Object>(key, token);
@@ -541,16 +820,74 @@ namespace emiteat.NexUI.Core
                 if (asset == null)
                     throw new System.InvalidOperationException(
                         $"Resource provider returned null for screen '{definition.ScreenId}' key '{key}'.");
+                // Contract: a non-null result hands this call exactly one reference which the
+                // wrapper surface releases on Destroy (or here, if creation fails below).
+                ownsLoad = true;
                 runtimeDefinition = UnityEngine.Object.Instantiate(definition);
                 var backendAsset = runtimeDefinition.backendAsset;
                 backendAsset.asset = asset;
                 runtimeDefinition.backendAsset = backendAsset;
-                return await factory.CreateAsync(runtimeDefinition, parent, token);
+                var created = await factory.CreateAsync(runtimeDefinition, parent, token);
+
+                // Ownership: the provider handle stays alive for as long as the surface lives.
+                // Releasing here would unload shared textures/meshes out from under the
+                // instantiated screen; the wrapper releases when the surface is destroyed.
+                return new ResourceOwnedSurface(created, ResourceProvider, key);
+            }
+            catch
+            {
+                // No surface took ownership of the load (factory threw or open was cancelled):
+                // release immediately so a failed open does not leak the addressable.
+                if (ownsLoad)
+                    ResourceProvider.Release(key);
+                throw;
             }
             finally
             {
-                ResourceProvider.Release(key);
                 if (runtimeDefinition != null) UnityEngine.Object.Destroy(runtimeDefinition);
+            }
+        }
+
+        /// <summary>
+        /// Delegating surface that releases its resource-provider key exactly once, when the
+        /// underlying surface is destroyed. Keeps backend code untouched.
+        /// </summary>
+        private sealed class ResourceOwnedSurface : IUISurface
+        {
+            private readonly IUISurface _inner;
+            private readonly IUIResourceProvider _provider;
+            private readonly string _key;
+            private bool _released;
+
+            public ResourceOwnedSurface(IUISurface inner, IUIResourceProvider provider, string key)
+            {
+                _inner = inner;
+                _provider = provider;
+                _key = key;
+            }
+
+            public string ScreenId => _inner.ScreenId;
+            public UIRenderBackend Backend => _inner.Backend;
+            public object NativeRoot => _inner.NativeRoot;
+            public IUIElementHandle RootHandle => _inner.RootHandle;
+
+            public IUIElementHandle TryFind(string elementId) => _inner.TryFind(elementId);
+            public IUIElementHandle FindRequired(string elementId) => _inner.FindRequired(elementId);
+            public void SetActive(bool active) => _inner.SetActive(active);
+            public void SetSortingOrder(int order) => _inner.SetSortingOrder(order);
+            public void SetInputBlocking(bool blocking) => _inner.SetInputBlocking(blocking);
+
+            public void Destroy()
+            {
+                try { _inner.Destroy(); }
+                finally
+                {
+                    if (!_released)
+                    {
+                        _released = true;
+                        _provider.Release(_key);
+                    }
+                }
             }
         }
 
@@ -708,18 +1045,35 @@ namespace emiteat.NexUI.Core
             return true;
         }
 
-        private async Task<TransitionHandle> BeginTransitionAsync(string screenId, UITransitionConflictPolicy policy)
+        private async Task<TransitionHandle> BeginTransitionAsync(string screenId, UITransitionConflictPolicy policy,
+            CancellationToken external = default)
         {
             while (_transitions.TryGetValue(screenId, out var current))
             {
                 if (policy == UITransitionConflictPolicy.Ignore) return null;
                 if (policy == UITransitionConflictPolicy.Cancel)
                     current.Cancellation.Cancel();
-                await current.Completion.Task;
+
+                if (external.CanBeCanceled)
+                {
+                    // Let the caller's token break out of the wait, not just the in-flight op.
+                    var finished = await Task.WhenAny(
+                        current.Completion.Task,
+                        Task.Delay(System.Threading.Timeout.InfiniteTimeSpan, external));
+                    if (finished != current.Completion.Task)
+                        return null; // caller cancelled while waiting
+                }
+                else
+                {
+                    await current.Completion.Task;
+                }
+
                 if (_lifetimeCts.IsCancellationRequested) return null;
             }
 
-            var handle = new TransitionHandle(_lifetimeCts.Token);
+            var handle = external.CanBeCanceled
+                ? new TransitionHandle(_lifetimeCts.Token, external)
+                : new TransitionHandle(_lifetimeCts.Token);
             _transitions[screenId] = handle;
             return handle;
         }
@@ -739,7 +1093,7 @@ namespace emiteat.NexUI.Core
         }
 
         private void RollbackOpen(string screenId, UIScreenInstance instance, IUISurface surface,
-            bool policyApplied, int appliedInputPolicies, bool focusTrapped)
+            bool policyApplied, int appliedInputPolicies, bool focusTrapped, bool fromRetained)
         {
             _open.Remove(screenId);
             _modalStack.Remove(screenId);
@@ -754,7 +1108,21 @@ namespace emiteat.NexUI.Core
                 for (int i = appliedInputPolicies - 1; i >= 0; i--)
                     try { _inputPolicies[i].Release(instance.Definition); }
                     catch (System.Exception ex) { RaiseScreenFaulted(screenId, ex); }
-            SafeDestroySurface(screenId, surface);
+
+            // A surface taken from the retained cache is a known-good instance: put it back so
+            // its lifetime contract (KeepAlive/Pool/Preload) survives a failed open. Only
+            // surfaces created during this call are destroyed.
+            if (fromRetained && instance != null && ShouldRetain(instance.Definition))
+            {
+                try { surface.SetActive(false); }
+                catch (System.Exception ex) { RaiseScreenFaulted(screenId, ex); }
+                _retained[screenId] = instance;
+            }
+            else
+            {
+                SafeDestroySurface(screenId, surface);
+            }
+
             if (instance != null) instance.State = UIScreenState.Closed;
         }
 
@@ -801,7 +1169,16 @@ namespace emiteat.NexUI.Core
 
         public void Shutdown()
         {
+            _liveManagers.Remove(this);
             _lifetimeCts.Cancel();
+
+            // Release close waiters so awaiting game code does not hang past teardown.
+            foreach (var waiters in _closeWaiters.Values)
+                foreach (var waiter in waiters)
+                    waiter.TrySetResult(null);
+            _closeWaiters.Clear();
+            _closeResults.Clear();
+
             foreach (var transition in _transitions.Values.ToList())
             {
                 transition.Cancellation.Cancel();

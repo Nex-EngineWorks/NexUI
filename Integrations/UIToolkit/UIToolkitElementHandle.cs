@@ -133,34 +133,56 @@ namespace emiteat.NexUI.Integrations.UIToolkit
         private sealed class VeTransform : IUITransformCapability
         {
             private readonly VisualElement _ve;
-            private Vector2 _position;
-            private Vector3 _scale = Vector3.one;
-            private float _rotation;
 
             public VeTransform(VisualElement ve) => _ve = ve;
 
             public float Opacity
             {
-                get => _ve.resolvedStyle.opacity;
+                // Prefer an explicit inline opacity over the resolved one: a just-written value must
+                // read back immediately inside an animation loop, not one layout pass later.
+                get => _ve.style.opacity.keyword != StyleKeyword.Null
+                    ? _ve.style.opacity.value
+                    : _ve.resolvedStyle.opacity;
                 set => _ve.style.opacity = value;
             }
 
             public Vector2 Position
             {
-                get => _position;
-                set { _position = value; _ve.style.translate = new Translate(value.x, value.y, 0); }
+                get
+                {
+                    var t = _ve.style.translate.keyword == StyleKeyword.Null
+                        ? _ve.resolvedStyle.translate
+                        : _ve.style.translate.value;
+                    return new Vector2(t.x.value, t.y.value);
+                }
+                set => _ve.style.translate = new Translate(value.x, value.y, 0);
             }
+
+            // Scale keeps the last-written value: the Scale style struct's accessor surface varies
+            // across Unity versions, and scale is the one axis animations always write before read.
+            private Vector3 _lastWrittenScale = Vector3.one;
 
             public Vector3 Scale
             {
-                get => _scale;
-                set { _scale = value; _ve.style.scale = new Scale(new Vector2(value.x, value.y)); }
+                get => _lastWrittenScale;
+                set
+                {
+                    _lastWrittenScale = value;
+                    _ve.style.scale = new Scale(new Vector2(value.x, value.y));
+                }
             }
 
             public float Rotation
             {
-                get => _rotation;
-                set { _rotation = value; _ve.style.rotate = new Rotate(new Angle(value, AngleUnit.Degree)); }
+                get
+                {
+                    var r = _ve.style.rotate.keyword == StyleKeyword.Null
+                        ? _ve.resolvedStyle.rotate
+                        : _ve.style.rotate.value;
+                    var angle = r.angle;
+                    return angle.unit == AngleUnit.Degree ? angle.value : angle.value * Mathf.Rad2Deg;
+                }
+                set => _ve.style.rotate = new Rotate(new Angle(value, AngleUnit.Degree));
             }
         }
 

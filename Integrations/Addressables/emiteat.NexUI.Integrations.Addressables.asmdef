@@ -5,8 +5,7 @@
         "emiteat.NexUI.Abstractions",
         "emiteat.NexUI.Core",
         "Unity.Addressables",
-        "Unity.ResourceManager",
-        "UniTask"
+        "Unity.ResourceManager"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

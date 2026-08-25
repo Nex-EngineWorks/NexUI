@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using emiteat.NexUI.Abstractions;
 using emiteat.NexUI.Core;
 using emiteat.NexUI.Motion;
@@ -47,11 +48,27 @@ namespace emiteat.NexUI.Integrations.UIToolkit
         /// <summary>The manager wired by this bootstrap; defaults to the shared NexUIApp.Manager.</summary>
         public UIManager Manager { get; private set; }
 
+        private readonly List<UIToolkitLayerRoot> _registeredRoots = new List<UIToolkitLayerRoot>();
+        private readonly List<VisualElement> _containers = new List<VisualElement>();
+
         private void Awake()
         {
             if (_document == null) _document = GetComponent<UIDocument>();
             Manager = Core.NexUIApp.Manager;
             Register(Manager);
+        }
+
+        private void OnDestroy()
+        {
+            // Unregister in reverse so a destroyed bootstrap never leaves the manager mounting new
+            // screens onto dead VisualElements.
+            foreach (var root in _registeredRoots)
+                Manager?.UnregisterLayer(root);
+            _registeredRoots.Clear();
+
+            foreach (var container in _containers)
+                container.RemoveFromHierarchy();
+            _containers.Clear();
         }
 
         /// <summary>Wire the UI Toolkit backend into the given manager.</summary>
@@ -66,7 +83,7 @@ namespace emiteat.NexUI.Integrations.UIToolkit
 
             var root = _document.rootVisualElement;
 
-            manager.RegisterFactory(new UIToolkitScreenFactory());
+            manager.RegisterFactory(new NexCompiledUitoolkitScreenFactory(new UIToolkitScreenFactory()));
             manager.RegisterFocusAdapter(new UIToolkitFocusAdapter());
 
             manager.MotionPlayer ??= new BuiltInMotionPlayer();
@@ -84,7 +101,10 @@ namespace emiteat.NexUI.Integrations.UIToolkit
                 container.pickingMode = PickingMode.Ignore;
                 root.Add(container);
 
-                manager.RegisterLayer(new UIToolkitLayerRoot(layer, container, order));
+                var layerRoot = new UIToolkitLayerRoot(layer, container, order);
+                manager.RegisterLayer(layerRoot);
+                _registeredRoots.Add(layerRoot);
+                _containers.Add(container);
                 order += 100;
             }
         }

@@ -3,8 +3,7 @@
     "rootNamespace": "emiteat.NexUI.MotionGraph",
     "references": [
         "emiteat.NexUI.Abstractions",
-        "emiteat.NexUI.MotionClip",
-        "UniTask"
+        "emiteat.NexUI.MotionClip"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

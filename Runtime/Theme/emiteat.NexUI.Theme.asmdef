@@ -2,8 +2,7 @@
     "name": "emiteat.NexUI.Theme",
     "rootNamespace": "emiteat.NexUI.Theme",
     "references": [
-        "emiteat.NexUI.Abstractions",
-        "UniTask"
+        "emiteat.NexUI.Abstractions"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

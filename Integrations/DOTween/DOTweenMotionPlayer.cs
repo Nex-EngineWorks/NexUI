@@ -41,11 +41,7 @@ namespace emiteat.NexUI.Integrations.DOTween
             foreach (var track in timeline.Tracks)
             {
                 if (track == null || track.Keyframes == null || track.Keyframes.Length == 0) continue;
-                float from = track.Keyframes[0].Value;
-                float to = track.Keyframes[track.Keyframes.Length - 1].Value;
-                var tween = MakeTween(cap, track.Property, from, to, track.Duration)
-                    .SetEase(track.Easing.ToDOTweenEase());
-                seq.Insert(track.Delay, tween);
+                AppendTrack(seq, cap, track);
             }
 
             MotionEvents.RaiseStarted(target.Id, timeline.MotionId);
@@ -60,10 +56,20 @@ namespace emiteat.NexUI.Integrations.DOTween
 
             _active[target] = seq;
 
-            if (ct.CanBeCanceled)
-                ct.Register(() => Stop(target));
-
-            await tcs.Task;
+            // Dispose the registration before returning: UIManager disposes the linked CTS
+            // right after the transition ends, and undisposed registrations would keep firing
+            // against it (and accumulate on long-lived tokens).
+            CancellationTokenRegistration registration = default;
+            try
+            {
+                if (ct.CanBeCanceled)
+                    registration = ct.Register(() => Stop(target));
+                await tcs.Task;
+            }
+            finally
+            {
+                registration.Dispose();
+            }
         }
 
         public void Stop(IUIElementHandle target)
@@ -76,30 +82,67 @@ namespace emiteat.NexUI.Integrations.DOTween
             }
         }
 
-        private static Tweener MakeTween(IUITransformCapability cap, UIMotionProperty property, float from, float to, float duration)
+        /// <summary>
+        /// Animates every keyframe of the track, not just the first and last. Each segment is
+        /// a normalized 0→1 tween whose setter lerps between the surrounding keyframe values,
+        /// so segment chaining stays exact regardless of when DOTween samples getters.
+        /// </summary>
+        private static void AppendTrack(Sequence seq, IUITransformCapability cap, UIMotionTrack track)
         {
-            duration = duration <= 0f ? 0.0001f : duration;
+            var keyframes = track.Keyframes;
+            var duration = track.Duration <= 0f ? 0.0001f : track.Duration;
+
+            // Snap to the authored start pose immediately (also covers delay gaps).
+            ApplyValue(cap, track.Property, keyframes[0].Value);
+
+            if (keyframes.Length == 1)
+            {
+                // Hold the pose for the track duration so completion still fires on time.
+                seq.Insert(track.Delay, DG.Tweening.DOTween.To(() => 0f, v => { }, 0f, duration));
+                return;
+            }
+
+            for (int i = 1; i < keyframes.Length; i++)
+            {
+                var from = keyframes[i - 1];
+                var to = keyframes[i];
+                float segStart = Mathf.Clamp01(from.Time) * duration + track.Delay;
+                float segEnd = Mathf.Clamp01(to.Time) * duration + track.Delay;
+                float segDuration = Mathf.Max(0.0001f, segEnd - segStart);
+
+                var tween = DG.Tweening.DOTween.To(
+                        () => 0f,
+                        v => ApplyValue(cap, track.Property, Mathf.LerpUnclamped(from.Value, to.Value, v)),
+                        1f,
+                        segDuration)
+                    .SetEase(track.Easing.ToDOTweenEase());
+                seq.Insert(segStart, tween);
+            }
+        }
+
+        private static void ApplyValue(IUITransformCapability cap, UIMotionProperty property, float value)
+        {
             switch (property)
             {
                 case UIMotionProperty.Opacity:
-                    cap.Opacity = from;
-                    return DG.Tweening.DOTween.To(() => cap.Opacity, v => cap.Opacity = v, to, duration);
+                    cap.Opacity = value;
+                    break;
                 case UIMotionProperty.PositionX:
-                    SetPosX(cap, from);
-                    return DG.Tweening.DOTween.To(() => cap.Position.x, v => SetPosX(cap, v), to, duration);
+                    SetPosX(cap, value);
+                    break;
                 case UIMotionProperty.PositionY:
-                    SetPosY(cap, from);
-                    return DG.Tweening.DOTween.To(() => cap.Position.y, v => SetPosY(cap, v), to, duration);
+                    SetPosY(cap, value);
+                    break;
                 case UIMotionProperty.ScaleX:
-                    SetScaleX(cap, from);
-                    return DG.Tweening.DOTween.To(() => cap.Scale.x, v => SetScaleX(cap, v), to, duration);
+                    SetScaleX(cap, value);
+                    break;
                 case UIMotionProperty.ScaleY:
-                    SetScaleY(cap, from);
-                    return DG.Tweening.DOTween.To(() => cap.Scale.y, v => SetScaleY(cap, v), to, duration);
+                    SetScaleY(cap, value);
+                    break;
                 case UIMotionProperty.Rotation:
                 default:
-                    cap.Rotation = from;
-                    return DG.Tweening.DOTween.To(() => cap.Rotation, v => cap.Rotation = v, to, duration);
+                    cap.Rotation = value;
+                    break;
             }
         }
 

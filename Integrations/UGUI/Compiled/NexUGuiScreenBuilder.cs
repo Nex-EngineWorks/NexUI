@@ -1,8 +1,10 @@
 using System;
+using emiteat.NexUI.Abstractions;
 using emiteat.NexUI.Compiled;
 using emiteat.NexUI.Diagnostics;
 using emiteat.NexUI.Flow;
 using emiteat.NexUI.Interaction;
+using emiteat.NexUI.Motion;
 using emiteat.NexUI.Overrides;
 using emiteat.NexUI.State;
 using TMPro;
@@ -33,6 +35,12 @@ namespace emiteat.NexUI.Integrations.UGUI
         /// every project either bends to it or ignores it.
         /// </remarks>
         public UIBindingConverterRegistry Converters;
+
+        /// <summary>Resolves compiled motion ids to runtime presets.</summary>
+        public UIMotionRegistryAsset MotionRegistry;
+
+        /// <summary>Optional custom player. Defaults to BuiltInMotionPlayer when a registry exists.</summary>
+        public IUIMotionPlayer MotionPlayer;
     }
 
     /// <summary>
@@ -85,6 +93,13 @@ namespace emiteat.NexUI.Integrations.UGUI
             if (diagnostics != null) interactions.DiagnosticRaised += d => diagnostics.Add(d);
             runtime.AttachInteractions(interactions);
 
+            // Before the build loop, so the report reads as a property of the screen rather
+            // than as something that happened part-way through constructing it.
+            var motionPlayer = options.MotionPlayer ??
+                               (options.MotionRegistry != null ? new BuiltInMotionPlayer() : null);
+            NexUGuiCarriedFeatureReport.Report(program, diagnostics,
+                options.MotionRegistry != null && motionPlayer != null);
+
             var nodes = program.Nodes;
             var built = new RectTransform[nodes.Length];
 
@@ -109,18 +124,43 @@ namespace emiteat.NexUI.Integrations.UGUI
                 var authoringPath = program.SourceMap.PathOfIndex(i);
                 if (string.IsNullOrEmpty(authoringPath)) authoringPath = node.Name;
 
+                // Before the wiring below: a layout group added after a child has been parented
+                // still arranges it, but ContentSizeFitter reads a preferred size that the text
+                // components set, so the order matters for Hug.
+                NexUGuiLayoutApplier.Apply(node, rect, authoringPath, diagnostics);
+                NexUGuiAppearanceApplier.Apply(node, rect, authoringPath, diagnostics);
+
                 WireText(runtime, node, rect, options, authoringPath, i, overrides);
                 WireCommand(runtime, program, node, rect, options, authoringPath);
                 WireStateBindings(runtime, node, rect, options, authoringPath, i, overrides);
                 WireInteractionTriggers(runtime, interactions, i, rect, nodes[i]);
                 WireOverlay(runtime, interactions, i, rect, nodes[i]);
                 WireAccessibility(node, rect);
+                WireMotion(runtime, node, rect, options.MotionRegistry, motionPlayer,
+                    authoringPath, diagnostics);
+
+                // After the text wiring: typography is an override layer, so the base font
+                // size and colour from the node have to be in place before it runs.
+                NexUGuiTypographyApplier.Apply(node, rect.gameObject, authoringPath, diagnostics);
 
                 rect.gameObject.SetActive(node.Visible);
             }
 
             // After the loop: chaining navigation needs every selectable to exist first.
             NexAccessibility.ApplyExplicitNavigation(root);
+
+            // Also after the loop, and before the condition applier snapshots anything. Part nudges
+            // are deltas from where the control put its parts, so they have to land while that is
+            // still the current transform - and a state that later moves the same part must
+            // snapshot the nudged position as its base, not the control's.
+            NexUGuiPartApplier.Apply(program, built, diagnostics);
+
+            // Also after the loop. The applier snapshots the base value of everything the states
+            // and responsive rules touch, and a snapshot taken while the hierarchy was half-built
+            // would record the values of nodes that had not been wired yet.
+            runtime.Conditions = new NexUGuiConditionApplier(program, built, diagnostics);
+            runtime.Conditions.ApplyInitial();
+            runtime.PlayEntryMotions();
 
             // Only screens that actually park a rule mid-sequence get a per-frame pump.
             if (!interactions.IsEmpty && program.Interactions.HasDelays())
@@ -131,6 +171,28 @@ namespace emiteat.NexUI.Integrations.UGUI
             runtime.RaiseShow();
 
             return runtime;
+        }
+
+        private static void WireMotion(NexScreenRuntime runtime, in NexNodeProgram node,
+            RectTransform rect, UIMotionRegistryAsset registry, IUIMotionPlayer player,
+            string authoringPath, NexDiagnosticBag diagnostics)
+        {
+            if (node.Motion.IsEmpty || registry == null || player == null) return;
+
+            if (!registry.TryGet(node.Motion.MotionId, out var preset))
+            {
+                diagnostics?.Add(NexDiagnosticCodes.FeatureCarriedNotApplied,
+                    new NexSourceLocation(runtime.ScreenId, node.NodeId, authoringPath, "Motion"),
+                    "Motion '" + node.Motion.MotionId + "' could not be resolved by the runtime registry.");
+                return;
+            }
+
+            if (rect.GetComponent<UGUIGestureRelay>() == null)
+                rect.gameObject.AddComponent<UGUIGestureRelay>();
+            var handle = new UGUIElementHandle(rect.gameObject, node.NodeId);
+            runtime.AttachMotion(new CompiledMotionBinding(handle, preset, player,
+                node.Motion.InitialVariant, node.Motion.AnimateVariant, node.Motion.ExitVariant,
+                node.Motion.HoverVariant, node.Motion.PressedVariant, node.Motion.FocusVariant).Attach());
         }
 
         /// <summary>
@@ -245,6 +307,19 @@ namespace emiteat.NexUI.Integrations.UGUI
             var local = node.Rect.position - parentOrigin;
             var size = node.Rect.size;
 
+            // Constraints are decided here rather than in the layout applier because they are
+            // placement: they write the same anchors ApplyPlacement writes, and two things writing
+            // one RectTransform is how they start fighting. They are also the more specific
+            // statement - the anchor preset says where the node sits, the constraint says what
+            // happens when the parent resizes - so when both exist the constraint wins the anchors.
+            // The node still lands in the same place at the authored parent size, because the
+            // offsets below are derived from the same authored rect; only resize behaviour differs.
+            if (node.Layout.PinsToParent)
+            {
+                ApplyConstraints(rect, node.Layout, local, size, parentSize);
+                return;
+            }
+
             if (node.Anchor == NexAnchor.Stretch)
             {
                 rect.anchorMin = Vector2.zero;
@@ -263,6 +338,82 @@ namespace emiteat.NexUI.Integrations.UGUI
 
             var topLeftInParent = new Vector2(local.x, parentSize.y - local.y);
             rect.anchoredPosition = topLeftInParent - new Vector2(anchor.x * parentSize.x, anchor.y * parentSize.y);
+        }
+
+        /// <summary>
+        /// Anchors a node so that resizing its parent moves it the way the author asked.
+        /// </summary>
+        /// <remarks>
+        /// Expressed as anchors plus offsets rather than as an anchored position, because that is
+        /// the only form that covers every combination: Scale needs a stretched anchor pair on that
+        /// axis, the other three need a point anchor, and an author may pick one of each.
+        /// Computing <c>offsetMin</c> / <c>offsetMax</c> from the authored rect reduces to the same
+        /// numbers in both cases, so there is no branch on which kind of anchor was chosen.
+        ///
+        /// The authoring origin is the parent's top-left with y going down; uGUI's is the bottom-
+        /// left with y going up. The flip happens once, here, when the edges are computed.
+        ///
+        /// The parent's size comes from the compiled program, not from the live hierarchy, for the
+        /// same reason the rest of the placement does: the build must produce the same result in a
+        /// player, in a test with no canvas, and in a headless bake.
+        /// </remarks>
+        private static void ApplyConstraints(RectTransform rect, in NexLayoutProgram layout,
+            Vector2 local, Vector2 size, Vector2 parentSize)
+        {
+            float left = local.x;
+            float right = local.x + size.x;
+            float top = parentSize.y - local.y;
+            float bottom = top - size.y;
+
+            AxisAnchors(layout.HorizontalConstraint, left, right, parentSize.x,
+                out var minX, out var maxX);
+
+            // Start pins to the top, which is anchor 1 on an axis that counts upwards - the flip
+            // the authoring model's y-down origin implies.
+            AxisAnchors(layout.VerticalConstraint, bottom, top, parentSize.y,
+                out var minY, out var maxY, invert: true);
+
+            rect.anchorMin = new Vector2(minX, minY);
+            rect.anchorMax = new Vector2(maxX, maxY);
+            rect.pivot = new Vector2(0f, 1f); // The element's own top-left, matching authoring.
+
+            rect.offsetMin = new Vector2(left - minX * parentSize.x, bottom - minY * parentSize.y);
+            rect.offsetMax = new Vector2(right - maxX * parentSize.x, top - maxY * parentSize.y);
+        }
+
+        /// <summary>
+        /// The anchor pair one axis needs, in that axis's own direction.
+        /// </summary>
+        /// <param name="invert">
+        /// Set for the vertical axis, where the authoring model's "Start" means the top and uGUI
+        /// counts from the bottom.
+        /// </param>
+        private static void AxisAnchors(NexConstraintMode mode, float nearEdge, float farEdge,
+            float parentExtent, out float min, out float max, bool invert = false)
+        {
+            switch (mode)
+            {
+                case NexConstraintMode.End:
+                    min = max = invert ? 0f : 1f;
+                    return;
+                case NexConstraintMode.Center:
+                    min = max = 0.5f;
+                    return;
+                case NexConstraintMode.Scale:
+                    // A zero-extent parent has no proportion to preserve, and dividing by it would
+                    // produce NaN anchors that make the node vanish rather than merely misplace it.
+                    if (Mathf.Approximately(parentExtent, 0f))
+                    {
+                        min = max = invert ? 1f : 0f;
+                        return;
+                    }
+                    min = nearEdge / parentExtent;
+                    max = farEdge / parentExtent;
+                    return;
+                default:
+                    min = max = invert ? 1f : 0f;
+                    return;
+            }
         }
 
         private static Vector2 AnchorPoint(NexAnchor anchor)

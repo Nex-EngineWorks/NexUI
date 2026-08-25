@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using emiteat.NexUI.Compiled;
+using emiteat.NexUI.Motion;
 using UnityEngine;
 
 namespace emiteat.NexUI.Integrations.UGUI
@@ -18,6 +20,7 @@ namespace emiteat.NexUI.Integrations.UGUI
     public sealed class NexScreenRuntime : IDisposable
     {
         private readonly List<IDisposable> _subscriptions = new List<IDisposable>();
+        private readonly List<CompiledMotionBinding> _motions = new List<CompiledMotionBinding>();
         private bool _disposed;
 
         public NexScreenProgram Program { get; }
@@ -31,6 +34,18 @@ namespace emiteat.NexUI.Integrations.UGUI
         /// Who last changed each node property. Answers "why does it say that?".
         /// </summary>
         public Overrides.NexOverrideLedger Overrides { get; internal set; }
+
+        /// <summary>
+        /// Resolves this screen's conditional layers - responsive rules and states. Never null;
+        /// empty when neither was authored.
+        /// </summary>
+        /// <remarks>
+        /// Exposed rather than hidden behind a <c>SetState</c> method on the runtime, because the
+        /// caller usually wants to ask what exists before choosing - a slot that shows Locked only
+        /// when the game says so still has to know Locked is a state this screen has - and because
+        /// telling the screen its viewport is a second thing the caller has to be able to do.
+        /// </remarks>
+        public NexUGuiConditionApplier Conditions { get; internal set; }
 
         /// <summary>
         /// Sets a node's text from game code and records that game code did it.
@@ -91,6 +106,33 @@ namespace emiteat.NexUI.Integrations.UGUI
         internal void Track(IDisposable subscription)
         {
             if (subscription != null) _subscriptions.Add(subscription);
+        }
+
+        internal void AttachMotion(CompiledMotionBinding motion)
+        {
+            if (motion == null) return;
+            _motions.Add(motion);
+            Track(motion);
+        }
+
+        internal void PlayEntryMotions()
+        {
+            for (var i = 0; i < _motions.Count; i++) Observe(_motions[i].PlayEntryAsync());
+        }
+
+        /// <summary>Plays every authored exit variant; await before disposing the screen.</summary>
+        public Task PlayExitMotionsAsync()
+        {
+            var tasks = new Task[_motions.Count];
+            for (var i = 0; i < _motions.Count; i++) tasks[i] = _motions[i].PlayExitAsync();
+            return Task.WhenAll(tasks);
+        }
+
+        private static async void Observe(Task task)
+        {
+            try { await task; }
+            catch (OperationCanceledException) { }
+            catch (Exception ex) { Debug.LogException(ex); }
         }
 
         internal void AttachInteractions(Interaction.NexInteractionRuntime interactions)

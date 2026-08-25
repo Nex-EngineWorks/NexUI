@@ -4,8 +4,7 @@
     "references": [
         "emiteat.NexUI.Abstractions",
         "emiteat.NexUI.Core",
-        "emiteat.NexUI.Settings",
-        "UniTask"
+        "emiteat.NexUI.Settings"
     ],
     "includePlatforms": [
         "Editor"

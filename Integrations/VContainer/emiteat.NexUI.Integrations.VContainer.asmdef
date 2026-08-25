@@ -9,8 +9,7 @@
         "emiteat.NexUI.Theme",
         "emiteat.NexUI.Query",
         "emiteat.NexUI.Settings",
-        "VContainer",
-        "UniTask"
+        "VContainer"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

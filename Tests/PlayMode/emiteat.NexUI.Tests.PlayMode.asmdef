@@ -19,11 +19,11 @@
         "emiteat.NexUI.Overrides",
         "emiteat.NexUI.Accessibility",
         "emiteat.NexUI.Integrations.UGUI",
+        "emiteat.NexUI.Integrations.UIToolkit",
         "Unity.TextMeshPro",
         "UnityEngine.UI",
         "UnityEngine.TestRunner",
-        "UnityEditor.TestRunner",
-        "UniTask"
+        "UnityEditor.TestRunner"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

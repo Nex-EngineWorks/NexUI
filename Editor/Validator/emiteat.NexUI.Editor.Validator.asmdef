@@ -6,8 +6,7 @@
         "emiteat.NexUI.Core",
         "emiteat.NexUI.Motion",
         "emiteat.NexUI.Theme",
-        "emiteat.NexUI.Settings",
-        "UniTask"
+        "emiteat.NexUI.Settings"
     ],
     "includePlatforms": [
         "Editor"

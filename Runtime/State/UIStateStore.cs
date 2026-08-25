@@ -10,21 +10,43 @@ namespace emiteat.NexUI.State
     /// </summary>
     public sealed class UIStateStore
     {
+        private sealed class Watcher
+        {
+            public Action<object> Handler;
+            public bool RemovedPending;
+        }
+
         private readonly Dictionary<string, object> _values = new Dictionary<string, object>();
-        private readonly Dictionary<string, List<Action<object>>> _watchers =
-            new Dictionary<string, List<Action<object>>>();
+        private readonly Dictionary<string, List<Watcher>> _watchers =
+            new Dictionary<string, List<Watcher>>();
+        /// <summary>>0 while any dispatch runs; removals defer to the end of the outermost one.</summary>
+        private int _dispatchDepth;
 
         public void Set<T>(string key, T value)
         {
             _values[key] = value;
             if (_watchers.TryGetValue(key, out var list))
             {
-                // Iterate a copy so a watcher may unsubscribe during notification.
-                var snapshot = list.ToArray();
-                for (int i = 0; i < snapshot.Length; i++)
+                // Allocation-free dispatch with snapshot semantics: a watermark excludes watchers
+                // added mid-dispatch, and removals defer so a watcher unsubscribing during
+                // notification still receives this value (the old ToArray() behaviour).
+                _dispatchDepth++;
+                var watermark = list.Count;
+                try
                 {
-                    try { snapshot[i]?.Invoke(value); }
-                    catch (Exception ex) { Debug.LogException(ex); }
+                    for (int i = 0; i < watermark; i++)
+                    {
+                        var handler = list[i].Handler;
+                        try { handler?.Invoke(value); }
+                        catch (Exception ex) { Debug.LogException(ex); }
+                    }
+                }
+                finally
+                {
+                    _dispatchDepth--;
+                    if (_dispatchDepth == 0)
+                        foreach (var l in _watchers.Values)
+                            l.RemoveAll(IsRemovedPending);
                 }
             }
         }
@@ -63,10 +85,11 @@ namespace emiteat.NexUI.State
 
             if (!_watchers.TryGetValue(key, out var list))
             {
-                list = new List<Action<object>>();
+                list = new List<Watcher>();
                 _watchers[key] = list;
             }
-            list.Add(Wrapper);
+            var node = new Watcher { Handler = Wrapper };
+            list.Add(node);
 
             if (_values.TryGetValue(key, out var current) && current is T currentTyped)
             {
@@ -76,13 +99,20 @@ namespace emiteat.NexUI.State
 
             return new Subscription(() =>
             {
+                if (_dispatchDepth > 0)
+                {
+                    node.RemovedPending = true;
+                    return;
+                }
                 if (_watchers.TryGetValue(key, out var l))
                 {
-                    l.Remove(Wrapper);
+                    l.Remove(node);
                     if (l.Count == 0) _watchers.Remove(key);
                 }
             });
         }
+
+        private static bool IsRemovedPending(Watcher node) => node.RemovedPending;
 
         public void Clear()
         {

@@ -66,6 +66,13 @@ namespace emiteat.NexUI.Motion
 
                     if (cts.IsCancellationRequested)
                     {
+                        // Cancellation snaps to the authored end pose instead of stranding the
+                        // element mid-flight - a cancelled open that stops at 40% opacity leaves a
+                        // retained screen visibly broken.
+                        ApplyAt(
+                            capability,
+                            timeline,
+                            total);
                         break;
                     }
 

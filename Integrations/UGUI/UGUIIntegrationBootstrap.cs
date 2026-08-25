@@ -42,11 +42,29 @@ namespace emiteat.NexUI.Integrations.UGUI
 
         public UIManager Manager { get; private set; }
 
+        private readonly System.Collections.Generic.List<UGUILayerRoot> _registeredRoots =
+            new System.Collections.Generic.List<UGUILayerRoot>();
+        private readonly System.Collections.Generic.List<GameObject> _containers =
+            new System.Collections.Generic.List<GameObject>();
+
         private void Awake()
         {
             if (_canvas == null) _canvas = GetComponent<Canvas>();
             Manager = Core.NexUIApp.Manager;
             Register(Manager);
+        }
+
+        private void OnDestroy()
+        {
+            // Unregister in reverse so a destroyed bootstrap never leaves the manager mounting new
+            // screens onto destroyed Canvas children.
+            foreach (var root in _registeredRoots)
+                Manager?.UnregisterLayer(root);
+            _registeredRoots.Clear();
+
+            foreach (var container in _containers)
+                if (container != null) Destroy(container);
+            _containers.Clear();
         }
 
         /// <summary>Wire the uGUI backend into the given manager.</summary>
@@ -59,7 +77,7 @@ namespace emiteat.NexUI.Integrations.UGUI
                 return;
             }
 
-            manager.RegisterFactory(new UGUIScreenFactory());
+            manager.RegisterFactory(new NexCompiledUguiScreenFactory(new UGUIScreenFactory()));
             manager.RegisterFocusAdapter(new UGUIFocusAdapter());
 
             manager.MotionPlayer ??= new BuiltInMotionPlayer();
@@ -78,7 +96,10 @@ namespace emiteat.NexUI.Integrations.UGUI
                 rt.offsetMin = Vector2.zero;
                 rt.offsetMax = Vector2.zero;
 
-                manager.RegisterLayer(new UGUILayerRoot(layer, go, order));
+                var layerRoot = new UGUILayerRoot(layer, go, order);
+                manager.RegisterLayer(layerRoot);
+                _registeredRoots.Add(layerRoot);
+                _containers.Add(go);
                 order += 100;
             }
         }

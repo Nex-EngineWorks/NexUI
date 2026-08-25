@@ -45,6 +45,12 @@ namespace emiteat.NexUI.Core
 
         public bool Contains(string screenId) => _definitions.ContainsKey(screenId);
 
+        /// <summary>
+        /// Removes one registration. Returns the removed definition so the caller can re-register
+        /// it; a screen that is currently OPEN keeps its instance - only future lookups are affected.
+        /// </summary>
+        public bool Unregister(string screenId) => _definitions.Remove(screenId);
+
         public void Clear() => _definitions.Clear();
     }
 }

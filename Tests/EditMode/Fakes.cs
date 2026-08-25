@@ -130,7 +130,7 @@ namespace emiteat.NexUI.Tests.Fakes
 
     /// <summary>
     /// Deterministic <see cref="IUIMotionClipPlayer"/> double for state-machine tests: PlayAsync
-    /// returns a UniTask under manual control (via <see cref="CompletePending"/>), so tests can
+    /// returns a Task under manual control (via <see cref="CompletePending"/>), so tests can
     /// simulate "a transition is still playing" without depending on Unity's real player loop
     /// ticking (which EditMode tests can't reliably drive).
     /// </summary>

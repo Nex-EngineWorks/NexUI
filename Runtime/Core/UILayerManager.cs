@@ -20,6 +20,19 @@ namespace emiteat.NexUI.Core
             _roots[(root.Backend, root.LayerType)] = root;
         }
 
+        /// <summary>
+        /// Removes a layer root, but only if it is still the one registered for its slot - so a
+        /// destroyed bootstrap never evicts a newer bootstrap's registration.
+        /// </summary>
+        public bool UnregisterLayer(IUILayerRoot root)
+        {
+            if (root == null) return false;
+            var key = (root.Backend, root.LayerType);
+            if (!_roots.TryGetValue(key, out var current) || !ReferenceEquals(current, root)) return false;
+            _roots.Remove(key);
+            return true;
+        }
+
         public bool TryGetLayer(UIRenderBackend backend, UILayerType layer, out IUILayerRoot root)
             => _roots.TryGetValue((backend, layer), out root);
 

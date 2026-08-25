@@ -4,8 +4,7 @@
     "references": [
         "emiteat.NexUI.Abstractions",
         "emiteat.NexUI.Core",
-        "emiteat.NexUI.MotionClip",
-        "UniTask"
+        "emiteat.NexUI.MotionClip"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

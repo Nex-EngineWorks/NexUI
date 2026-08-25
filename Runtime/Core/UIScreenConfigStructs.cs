@@ -160,6 +160,13 @@ namespace emiteat.NexUI.Core
         public bool suppressMotion;
         public bool immediate;
 
+        /// <summary>
+        /// Optional value the closer hands back to whoever is waiting via
+        /// <see cref="UIManager.WaitForCloseAsync"/> - the request/response half of
+        /// dialog-style navigation (e.g. the item a shop screen confirmed selling).
+        /// </summary>
+        public object result;
+
         public static UICloseArgs None => default;
     }
 }

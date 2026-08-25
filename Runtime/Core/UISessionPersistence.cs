@@ -23,7 +23,7 @@ namespace emiteat.NexUI.Core
     /// ended. Construct once after registering screens/factories; nothing happens until you do -
     /// existing <see cref="UIManager"/> behavior is unchanged if you never create this.
     /// </summary>
-    public sealed class UISessionPersistence
+    public sealed class UISessionPersistence : System.IDisposable
     {
         private const string LastScreenKey = "nexui.session.lastScreen";
 
@@ -38,6 +38,13 @@ namespace emiteat.NexUI.Core
             _trackedLayer = trackedLayer;
             _manager.ScreenOpened += OnScreenOpened;
             _manager.ScreenClosed += OnScreenClosed;
+        }
+
+        /// <summary>Unsubscribes from the manager. Required on teardown - the manager outlives this object.</summary>
+        public void Dispose()
+        {
+            _manager.ScreenOpened -= OnScreenOpened;
+            _manager.ScreenClosed -= OnScreenClosed;
         }
 
         /// <summary>Opens whatever screen was last recorded, if any. Call once at startup after registering screens/factories.</summary>

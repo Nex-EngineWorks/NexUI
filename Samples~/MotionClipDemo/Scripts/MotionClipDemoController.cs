@@ -1,4 +1,4 @@
-using Cysharp.Threading.Tasks;
+using System.Threading.Tasks;
 using UnityEngine;
 using emiteat.NexUI.Core;
 using emiteat.NexUI.MotionClip;
@@ -37,7 +37,7 @@ namespace emiteat.NexUI.Samples.MotionClipDemo
             _ = OpenAndAnimateAsync();
         }
 
-        private async UniTask OpenAndAnimateAsync()
+        private async Task OpenAndAnimateAsync()
         {
             await NexUIApp.OpenAsync(_panel.ScreenId, new UIOpenArgs { suppressMotion = true });
             await NexUIApp.Manager.PlayMotionClipAsync(_panel.ScreenId, _openClip);

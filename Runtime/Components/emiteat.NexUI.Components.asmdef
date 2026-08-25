@@ -2,8 +2,7 @@
     "name": "emiteat.NexUI.Components",
     "rootNamespace": "emiteat.NexUI.Components",
     "references": [
-        "emiteat.NexUI.Abstractions",
-        "UniTask"
+        "emiteat.NexUI.Abstractions"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

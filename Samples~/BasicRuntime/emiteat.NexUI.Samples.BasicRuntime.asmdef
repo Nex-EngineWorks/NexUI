@@ -10,8 +10,7 @@
         "emiteat.NexUI.Components",
         "emiteat.NexUI.Query",
         "emiteat.NexUI.Integrations.UIToolkit",
-        "emiteat.NexUI.Integrations.UGUI",
-        "UniTask"
+        "emiteat.NexUI.Integrations.UGUI"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

@@ -3,8 +3,7 @@
     "rootNamespace": "emiteat.NexUI.Query",
     "references": [
         "emiteat.NexUI.Abstractions",
-        "emiteat.NexUI.State",
-        "UniTask"
+        "emiteat.NexUI.State"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

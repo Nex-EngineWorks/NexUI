@@ -194,6 +194,16 @@ namespace emiteat.NexUI.Compiled
         public string AutomationId;
 
         /// <summary>
+        /// Key this node's text is translated by, or empty when its text is literal.
+        /// </summary>
+        /// <remarks>
+        /// A key, not the translated string: baking the translation in would make the compiled
+        /// asset per-language, so switching language would mean shipping and reloading a different
+        /// screen instead of re-reading one table.
+        /// </remarks>
+        public string LocalizationKey;
+
+        /// <summary>
         /// Semantic role, shared with accessibility rather than duplicated.
         /// </summary>
         /// <remarks>
@@ -253,6 +263,35 @@ namespace emiteat.NexUI.Compiled
         /// costs nothing here and the compiled asset stays diffable.
         /// </remarks>
         public NexNodeProperty[] ControlProperties;
+
+        /// <summary>
+        /// How this node arranges its children and sizes itself. Default for a plain
+        /// absolutely-positioned node.
+        /// </summary>
+        /// <remarks>
+        /// A struct rather than a reference so a screen of ordinary rects carries no extra
+        /// allocation - the same reason <see cref="Rect"/> is inline.
+        /// </remarks>
+        public NexLayoutProgram Layout;
+
+        /// <summary>
+        /// The effects drawn on top of this node's tint. <see cref="NexAppearanceProgram.Neutral"/>
+        /// when the author changed nothing - note that is not <c>default</c>, because a neutral
+        /// opacity is 1.
+        /// </summary>
+        public NexAppearanceProgram Appearance;
+
+        /// <summary>
+        /// Text-rendering overrides. Inert unless <see cref="NexTypographyProgram.HasOverrides"/>,
+        /// in which case it layers on top of <see cref="FontSize"/> and <see cref="TextColor"/>.
+        /// </summary>
+        public NexTypographyProgram Typography;
+
+        /// <summary>Static classes, theme request and local token overrides.</summary>
+        public NexStyleProgram Style;
+
+        /// <summary>Declared motion. Carried even where no backend plays it yet.</summary>
+        public NexMotionProgram Motion;
 
         /// <summary>
         /// The vector path this node draws, or null when it is a plain rect.

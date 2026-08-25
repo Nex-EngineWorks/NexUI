@@ -51,11 +51,23 @@ namespace emiteat.NexUI.Abstractions
         public IUISurface Surface { get; }
         public CancellationToken CancellationToken { get; }
 
-        public UIScreenContext(string screenId, IUISurface surface, CancellationToken cancellationToken = default)
+        /// <summary>
+        /// The data handed to <see cref="emiteat.NexUI.Core.UIManager.OpenAsync"/> for this open.
+        /// Null when the caller passed none - the standard way screens receive their parameters.
+        /// </summary>
+        public IReadOnlyDictionary<string, object> Payload { get; }
+
+        /// <summary>The variant requested for this open, or null for the base look.</summary>
+        public string VariantId { get; }
+
+        public UIScreenContext(string screenId, IUISurface surface, CancellationToken cancellationToken = default,
+            IReadOnlyDictionary<string, object> payload = null, string variantId = null)
         {
             ScreenId = screenId;
             Surface = surface;
             CancellationToken = cancellationToken;
+            Payload = payload;
+            VariantId = variantId;
         }
     }
 }

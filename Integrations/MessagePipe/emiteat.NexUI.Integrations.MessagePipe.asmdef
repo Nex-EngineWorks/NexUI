@@ -4,8 +4,7 @@
     "references": [
         "emiteat.NexUI.Abstractions",
         "emiteat.NexUI.Core",
-        "MessagePipe",
-        "UniTask"
+        "MessagePipe"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
